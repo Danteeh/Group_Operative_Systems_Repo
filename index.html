@@ -1,14 +1,74 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <title>HTML</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="estilo.css">
+  <meta charset="UTF-8">
+  <title>Simulador de RAM</title>
 </head>
-
 <body>
-  <p>Esta página web es una página HTML válida.</p>
+  <h1>Gestión de Memoria</h1>
+
+  <form id="formProgram">
+    <label>
+      Memoria a usar (MB):
+      <input type="number" id="memoryToUse" step="0.1" required>
+    </label>
+    <br>
+    <label>
+      Memoria pila/montículo (MB):
+      <input type="number" id="sumPileAmount" step="0.1" required>
+    </label>
+    <br>
+    <label>
+      Índice de partición:
+      <input type="number" id="partitionIndex" min="0" required>
+    </label>
+    <br><br>
+    <button type="submit">Cargar Programa</button>
+  </form>
+
+  <h2>Estado de la RAM</h2>
+  <pre id="ramEstado"></pre>
+
+  <script type="module">
+    import { Program } from "./Scripts/Program.js";
+    import { Ram } from "./Scripts/Ram.js";
+    import { validarTamFijo } from "./Scripts/Script_Condiciones.js";
+
+    // RAM de 16 MB
+    const ram = new Ram(16);
+
+    const form = document.getElementById("formProgram");
+    const ramEstado = document.getElementById("ramEstado");
+
+    function actualizarVista() {
+      ramEstado.textContent = JSON.stringify(ram.getEstado(), null, 2);
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const memoryToUse = parseFloat(document.getElementById("memoryToUse").value);
+      const sumPileAmount = parseFloat(document.getElementById("sumPileAmount").value);
+      const indx = parseInt(document.getElementById("partitionIndex").value);
+
+      const prog = new Program(memoryToUse, sumPileAmount);
+
+      // validamos si cabe en la partición fija de 1 MB
+      if (validarTamFijo(prog, 1)) {
+        try {
+          ram.insertarPrograma(prog, indx);
+          alert("Programa cargado en RAM ");
+        } catch (err) {
+          alert("Error: " + err.message);
+        }
+      } else {
+        alert("El programa excede el tamaño de la partición");
+      }
+
+      actualizarVista();
+    });
+
+    actualizarVista(); // mostrar al inicio
+  </script>
 </body>
 </html>
-

@@ -9,4 +9,13 @@ export class Program {// Cambiamos la forma en sacar la memoria total el otro me
     get totalMemory() {//nuevo metodo mejor para su uso asi solo hacemos la suma aca y ahorramos pasos
         return this.memoryToUse + this.sumPileAmount;
     }
+    //Para enviar la info del programa al arreglo
+    info() {
+        return {
+            header: Program.HEADER,
+            memoryToUse: this.memoryToUse,
+            sumPileAmount: this.sumPileAmount,
+            totalMemory: this.totalMemory
+        };
+    }
 }
