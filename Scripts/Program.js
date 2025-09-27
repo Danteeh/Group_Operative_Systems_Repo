@@ -1,15 +1,12 @@
-class program {
-    Header = 745
-    Memory_to_use
-    Total_Memory
-    constructor(Memory_to_use,Sum_Pile_Amount){
-         this.Memory_to_use = Memory_to_use
-         this.Sum_Pile_Amount = Sum_Pile_Amount
-         this.Total_Memory = Memory_to_use+Sum_Pile_Amount
-
-    }
-    getTotalMemory(){
-        return this.Total_Memory
+export const HEADER = 745; // Lo dejamos como una constante global para que se cargue una vez y ya
+//Incluimos export para poder importar la clase o la constante en otras clases
+export class Program {// Cambiamos la forma en sacar la memoria total el otro metodo no era optimo
+    constructor(memoryToUse, sumPileAmount) {
+        this.memoryToUse = memoryToUse;
+        this.sumPileAmount = sumPileAmount;
     }
 
+    get totalMemory() {//nuevo metodo mejor para su uso asi solo hacemos la suma aca y ahorramos pasos
+        return this.memoryToUse + this.sumPileAmount;
+    }
 }
