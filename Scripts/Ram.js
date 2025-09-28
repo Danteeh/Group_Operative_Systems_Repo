@@ -1,49 +1,50 @@
 import { Program } from "./Program.js";
 
 export class Ram {
-    constructor(capacidadMiB = 16) {//La dejo capada a 16 pero podemos cambiarlo para crear RAM de otros tamaños 
-        this.capacidadMiB = capacidadMiB;       // capacidad total de la RAM
-        this.particiones = new Array(capacidadMiB).fill(null);
-        // cada índice = 1 MiB
+    constructor(capacidadMB) {
+        this.capacidad = capacidadMB;
+        this.particiones = new Array(capacidadMB).fill(null);
     }
 
-    //Nueva logica de insercion para cuando se crean programas y evitar problemas
-    insertarPrograma(program, indx) {
-        if (!(program instanceof Program)) {
-            throw new Error("Solo se pueden insertar instancias de Program");
-        }
-        if (indx < 0 || indx >= this.particiones.length) {
+    insertarPrograma(programa, indice) {
+        if (indice < 0 || indice >= this.particiones.length) {
             throw new Error("Índice fuera de rango");
         }
-        if (this.particiones[indx] !== null) {
-            throw new Error(`La partición ${indx} ya está ocupada`);
+        if (this.particiones[indice] !== null) {
+            throw new Error("La partición ya está ocupada");
         }
-        this.particiones[indx] = program;
-        return true;
+        this.particiones[indice] = programa;
     }
-    //Una validacion sencilla para evitar problemas
-    borrarPorIndice(indx) {
-        if (indx < 0 || indx >= this.particiones.length) {
+
+    finalizarPrograma(indice) {   // 👈 más intuitivo que borrarPrograma
+        if (indice < 0 || indice >= this.particiones.length) {
             throw new Error("Índice fuera de rango");
         }
-        this.particiones[indx] = null;
-        return true;
-    }
-    //Para borrar programas validar que este el programa y eliminarlo
-    borrarPorPrograma(program) {
-        const indx = this.particiones.findIndex(p => p === program);
-        if (indx === -1) {
-            throw new Error("El programa no está en RAM");
+        if (this.particiones[indice] === null) {
+            throw new Error("La partición ya está vacía");
         }
-        this.particiones[indx] = null;
-        return true;
+        this.particiones[indice] = null;
     }
-    //Para dar mas datos y ver que sucede en la memoria ram 
     getEstado() {
-        return this.particiones.map((p, i) => ({
-            indice: i,
-            ocupado: p !== null,
-            programa: p ? p.info() : null
-        }));
+        return this.particiones.map((p, i) => {
+            if (p) {
+                const fragmentacion = Math.max(0, 1 - p.totalMemory); // 1 MB - programa
+                return {
+                    particion: i,
+                    ocupado: true,
+                    programa: p.info(),
+                    fragmentacion: fragmentacion.toFixed(2)
+                };
+            } else {
+                return {
+                    particion: i,
+                    ocupado: false,
+                    programa: null,
+                    fragmentacion: "1.00" // partición libre = fragmentada completa
+                };
+            }
+        });
     }
+
+
 }

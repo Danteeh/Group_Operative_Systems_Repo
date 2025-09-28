@@ -3,72 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <title>Simulador de RAM</title>
+  <link rel="stylesheet" href="styles/styles.css">
 </head>
 <body>
   <h1>Gestión de Memoria</h1>
 
-  <form id="formProgram">
-    <label>
-      Memoria a usar (MB):
-      <input type="number" id="memoryToUse" step="0.1" required>
-    </label>
-    <br>
-    <label>
-      Memoria pila/montículo (MB):
-      <input type="number" id="sumPileAmount" step="0.1" required>
-    </label>
-    <br>
-    <label>
-      Índice de partición:
-      <input type="number" id="partitionIndex" min="0" required>
-    </label>
-    <br><br>
-    <button type="submit">Cargar Programa</button>
+  <!-- Formulario para crear programas -->
+  <h2>Crear Programa</h2>
+  <form id="formPrograma">
+    <label>Nombre: <input type="text" id="progNombre" required></label>
+    <label>Memoria (MB): <input type="number" id="progMemoria" step="0.1" min="0.1" required></label>
+    <button type="submit">Agregar a lista</button>
   </form>
 
+  <!-- Tabla de programas disponibles -->
+  <h2>Programas Disponibles</h2>
+  <div id="listaProgramas"></div>
+
+  <!-- Estado de la RAM -->
   <h2>Estado de la RAM</h2>
-  <pre id="ramEstado"></pre>
+  <p id="ramUso"></p>
+  <div id="ramEstado"></div>
 
-  <script type="module">
-    import { Program } from "./Scripts/Program.js";
-    import { Ram } from "./Scripts/Ram.js";
-    import { validarTamFijo } from "./Scripts/Script_Condiciones.js";
-
-    // RAM de 16 MB
-    const ram = new Ram(16);
-
-    const form = document.getElementById("formProgram");
-    const ramEstado = document.getElementById("ramEstado");
-
-    function actualizarVista() {
-      ramEstado.textContent = JSON.stringify(ram.getEstado(), null, 2);
-    }
-
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const memoryToUse = parseFloat(document.getElementById("memoryToUse").value);
-      const sumPileAmount = parseFloat(document.getElementById("sumPileAmount").value);
-      const indx = parseInt(document.getElementById("partitionIndex").value);
-
-      const prog = new Program(memoryToUse, sumPileAmount);
-
-      // validamos si cabe en la partición fija de 1 MB
-      if (validarTamFijo(prog, 1)) {
-        try {
-          ram.insertarPrograma(prog, indx);
-          alert("Programa cargado en RAM ");
-        } catch (err) {
-          alert("Error: " + err.message);
-        }
-      } else {
-        alert("El programa excede el tamaño de la partición");
-      }
-
-      actualizarVista();
-    });
-
-    actualizarVista(); // mostrar al inicio
-  </script>
+  <script type="module" src="Scripts/main.js"></script>
 </body>
 </html>

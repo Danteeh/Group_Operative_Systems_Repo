@@ -1,0 +1,42 @@
+table {
+    border-collapse: collapse;
+    width: 80%;
+    margin-top: 20px;
+}
+
+th,
+td {
+    border: 1px solid #333;
+    padding: 8px;
+    text-align: center;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+button {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+h2 {
+    margin-top: 30px;
+}
+
+form {
+    margin: 20px 0;
+    padding: 10px;
+    border: 1px solid #aaa;
+    width: 50%;
+    background: #f9f9f9;
+}
+
+form input {
+    margin: 5px;
+}
+
+#ramUso {
+    font-weight: bold;
+    margin-top: 15px;
+}
