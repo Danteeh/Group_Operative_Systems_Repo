@@ -1,6 +1,6 @@
-import { Program } from "./Program.js";
+import { Program} from "./Program.js";
 import { Ram } from "./Ram.js";
-import { validarTamFijo } from "./Script_Condiciones.js";
+import { validarPrimerAjuste, validarTamFijo, comprobador_tamfijo } from "./Script_Condiciones.js";
 
 // Constante global: heap/pila fijo (< 1 MB)
 const HEAP_PILA = 0.2;
@@ -15,12 +15,16 @@ let programasDisponibles = [
 ];
 
 // Creamos la RAM de 16 MB
-const ram = new Ram(16);
+
+const particiones = new Array(16).fill(null);
+const ram = new Ram(16, particiones);
 
 const listaProgramas = document.getElementById("listaProgramas");
 const ramEstado = document.getElementById("ramEstado");
 const ramUso = document.getElementById("ramUso");
 
+var fragmentacion;
+var Lis_Frag = new Array(16).fill(null);
 // Mostrar tabla de programas disponibles
 function renderListaProgramas() {
     let html = `
@@ -69,9 +73,11 @@ function insertarProgramaEnRAM(programName) {
         return;
     }
 
-    if (validarTamFijo(prog, 1)) {
+    if (validarTamFijo(prog, libre)) {
         try {
             ram.insertarPrograma(prog, libre);
+            fragmentacion = (comprobador_tamfijo[libre] - prog.totalMemory).toFixed(2);
+            Lis_Frag[libre] = parseFloat(fragmentacion);
             actualizarVista();
         } catch (err) {
             alert("Error: " + err.message);
@@ -105,8 +111,8 @@ function actualizarVista() {
         <tr>
           <td>${i}</td>
           <td>${p.programa.name}</td>
-          <td>${p.programa.totalMemory}</td>
-          <td>${p.fragmentacion}</td>
+          <td>${p.programa.totalMemory.toFixed(2)}</td>
+          <td>${Lis_Frag[i]}</td>
           <td><button data-action="finalizar" data-index="${i}">Finalizar</button></td>
         </tr>
       `;
@@ -116,7 +122,7 @@ function actualizarVista() {
           <td>${i}</td>
           <td>-</td>
           <td>-</td>
-          <td>${p.fragmentacion}</td>
+          <td>${comprobador_tamfijo[i]}</td>
           <td>Libre</td>
         </tr>
       `;

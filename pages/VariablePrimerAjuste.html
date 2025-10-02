@@ -2,8 +2,32 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Simulador de RAM</title>
+  <title>Simulador de RAM - Comparación</title>
   <link rel="stylesheet" href="../styles/styles.css">
+  <style>
+  table {
+    border-collapse: collapse;
+    margin: 15px auto;
+    width: 80%; /* cada tabla ocupa 80% del ancho */
+  }
+  th, td {
+    border: 1px solid #333;
+    padding: 6px 12px;
+    text-align: center;
+  }
+  h3 {
+    text-align: center;
+    margin-top: 20px;
+  }
+  #ramContenedor {
+    display: block;  /* vertical en lugar de horizontal */
+    width: 100%;
+  }
+  #ramContenedor > div {
+    margin-bottom: 30px; /* separación entre tablas */
+  }
+</style>
+
 </head>
 <body>
   <h1>Gestión de Memoria</h1>
@@ -11,20 +35,26 @@
   <!-- Formulario para crear programas -->
   <h2>Crear Programa</h2>
   <form id="formPrograma">
-    <label>Nombre: <input type="text" id="progNombre" required></label>
-    <label>Memoria (MB): <input type="number" id="progMemoria" step="0.1" min="0.1" required></label>
+    <label>Nombre: 
+      <input type="text" id="progNombre" required>
+    </label>
+    <label>Memoria (MB): 
+      <input type="number" id="progMemoria" step="0.1" min="0.1" required>
+    </label>
     <button type="submit">Agregar a lista</button>
   </form>
 
-  <!-- Tabla de programas disponibles -->
+  <!-- Lista de programas -->
   <h2>Programas Disponibles</h2>
   <div id="listaProgramas"></div>
 
-  <!-- Estado de la RAM -->
-  <h2>Estado de la RAM</h2>
-  <p id="ramUso"></p>
-  <div id="ramEstado"></div>
-
+  <!-- Estado comparativo de la RAM -->
+  <h2>Comparación de Algoritmos de Asignación</h2>
+  <div id="ramContenedor">
+    <div id="ramPrimerEstado"></div>
+    <div id="ramMejorEstado"></div>
+    <div id="ramPeorEstado"></div>
+  </div>
   <script type="module" src="../Scripts/TamañoVariable/mainTanVariable.js"></script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 import { Program } from "./Program.js";
 
 export class Ram {
-    constructor(capacidadMB) {
+    constructor(capacidadMB, particiones) {
         this.capacidad = capacidadMB;
-        this.particiones = new Array(capacidadMB).fill(null);
+        this.particiones = particiones;
     }
 
     insertarPrograma(programa, indice) {
@@ -16,7 +16,7 @@ export class Ram {
         this.particiones[indice] = programa;
     }
 
-    finalizarPrograma(indice) {   // 👈 más intuitivo que borrarPrograma
+    finalizarPrograma(indice) {
         if (indice < 0 || indice >= this.particiones.length) {
             throw new Error("Índice fuera de rango");
         }
@@ -32,7 +32,7 @@ export class Ram {
                 return {
                     particion: i,
                     ocupado: true,
-                    programa: p.info(),
+                    programa: p.info,
                     fragmentacion: fragmentacion.toFixed(2)
                 };
             } else {

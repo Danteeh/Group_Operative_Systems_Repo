@@ -1,6 +1,6 @@
 import { Program } from "../Program.js";
 import { Ram } from "../TamañoVariable/RamVariable.js";
-import { validarPrimerAjuste, validarTamFijo, comprobador } from "../Script_Condiciones.js";
+import { comprobador } from "../Script_Condiciones.js";
 
 // Constante global: heap/pila fijo (< 1 MB)
 const HEAP_PILA = 0.2;
@@ -14,17 +14,20 @@ let programasDisponibles = [
     { name: "Minecraft", memoryToUse: 0.9 }
 ];
 
-// Creamos la RAM de 16 MB
+// Creamos 3 RAM distintas para comparar
+const ramPrimer = new Ram(16, new Array(9).fill(null));
+const ramMejor  = new Ram(16, new Array(9).fill(null));
+const ramPeor   = new Ram(16, new Array(9).fill(null));
 
-const particiones = new Array(9).fill(null);
-const ram = new Ram(16, particiones);
+const listaProgramas   = document.getElementById("listaProgramas");
+const ramPrimerEstado  = document.getElementById("ramPrimerEstado");
+const ramMejorEstado   = document.getElementById("ramMejorEstado");
+const ramPeorEstado    = document.getElementById("ramPeorEstado");
 
-const listaProgramas = document.getElementById("listaProgramas");
-const ramEstado = document.getElementById("ramEstado");
-const ramUso = document.getElementById("ramUso");
+let Lis_Frag_Primer = new Array(9).fill(null);
+let Lis_Frag_Mejor  = new Array(9).fill(null);
+let Lis_Frag_Peor   = new Array(9).fill(null);
 
-var fragmentacion;
-var Lis_Frag = new Array(9).fill(null);
 // Mostrar tabla de programas disponibles
 function renderListaProgramas() {
     let html = `
@@ -44,7 +47,7 @@ function renderListaProgramas() {
       <tr>
         <td>${p.name}</td>
         <td>${(p.memoryToUse + HEAP_PILA).toFixed(2)}</td>
-        <td><button data-program="${p.name}">Insertar en RAM</button></td>
+        <td><button data-program="${p.name}">Insertar</button></td>
       </tr>
     `;
     });
@@ -52,46 +55,97 @@ function renderListaProgramas() {
     html += `</tbody></table>`;
     listaProgramas.innerHTML = html;
 
-    // Eventos de insertar
+    // Eventos de insertar en los tres esquemas
     listaProgramas.querySelectorAll("button").forEach(btn => {
         btn.addEventListener("click", () => {
             const programName = btn.dataset.program;
-            insertarProgramaEnRAM(programName);
+            insertarPrimerAjuste(programName);
+            insertarMejorAjuste(programName);
+            insertarPeorAjuste(programName);
         });
     });
 }
 
-// Insertar programa en la primera partición libre
-function insertarProgramaEnRAM(programName) {
+// Primer Ajuste
+function insertarPrimerAjuste(programName) {
     const datos = programasDisponibles.find(p => p.name === programName);
     const prog = new Program(datos.name, datos.memoryToUse, HEAP_PILA);
 
-    // Buscar primera partición libre
-    const libre = ram.particiones.findIndex(p => p === null);
-    if (libre === -1) {
-        alert("No hay particiones libres en la RAM");
+    let indice = ramPrimer.particiones.findIndex((p, i) => 
+        p === null && prog.totalMemory <= comprobador[i]
+    );
+
+    if (indice === -1) {
+        alert("No cabe en Primer Ajuste");
         return;
     }
 
-    if (validarPrimerAjuste(prog, libre)) {
-        try {
-            ram.insertarPrograma(prog, libre);
-            fragmentacion = comprobador[libre] - prog.totalMemory;
-            Lis_Frag[libre] = fragmentacion;
-            actualizarVista();
-        } catch (err) {
-            alert("Error: " + err.message);
-        }
-    } else {
-        alert("El programa excede el tamaño de la partición (1 MB)");
-    }
+    ramPrimer.insertarPrograma(prog, indice);
+    Lis_Frag_Primer[indice] = redondear(comprobador[indice] - prog.totalMemory);
+    actualizarVista(ramPrimer, ramPrimerEstado, Lis_Frag_Primer, "Primer Ajuste");
 }
 
-// Mostrar tabla de la RAM
-function actualizarVista() {
+// Mejor Ajuste
+function insertarMejorAjuste(programName) {
+    const datos = programasDisponibles.find(p => p.name === programName);
+    const prog = new Program(datos.name, datos.memoryToUse, HEAP_PILA);
+
+    let mejorIndice = -1;
+    let mejorEspacio = Infinity;
+
+    comprobador.forEach((tam, i) => {
+        if (ramMejor.particiones[i] === null && prog.totalMemory <= tam) {
+            let frag = tam - prog.totalMemory;
+            if (frag < mejorEspacio) {
+                mejorEspacio = frag;
+                mejorIndice = i;
+            }
+        }
+    });
+
+    if (mejorIndice === -1) {
+        alert("No cabe en Mejor Ajuste");
+        return;
+    }
+
+    ramMejor.insertarPrograma(prog, mejorIndice);
+    Lis_Frag_Mejor[mejorIndice] = redondear(mejorEspacio);
+    actualizarVista(ramMejor, ramMejorEstado, Lis_Frag_Mejor, "Mejor Ajuste");
+}
+
+// Peor Ajuste
+function insertarPeorAjuste(programName) {
+    const datos = programasDisponibles.find(p => p.name === programName);
+    const prog = new Program(datos.name, datos.memoryToUse, HEAP_PILA);
+
+    let peorIndice = -1;
+    let peorEspacio = -1;
+
+    comprobador.forEach((tam, i) => {
+        if (ramPeor.particiones[i] === null && prog.totalMemory <= tam) {
+            let frag = tam - prog.totalMemory;
+            if (frag > peorEspacio) {
+                peorEspacio = frag;
+                peorIndice = i;
+            }
+        }
+    });
+
+    if (peorIndice === -1) {
+        alert("No cabe en Peor Ajuste");
+        return;
+    }
+
+    ramPeor.insertarPrograma(prog, peorIndice);
+    Lis_Frag_Peor[peorIndice] = redondear(peorEspacio);
+    actualizarVista(ramPeor, ramPeorEstado, Lis_Frag_Peor, "Peor Ajuste");
+}
+
+// Mostrar tabla de la RAM (reutilizable)
+function actualizarVista(ram, contenedor, listaFrag, titulo) {
     const estado = ram.getEstado();
 
-    let html = `
+    let html = `<h3>${titulo}</h3>
     <table>
       <thead>
         <tr>
@@ -111,8 +165,8 @@ function actualizarVista() {
         <tr>
           <td>${i}</td>
           <td>${p.programa.name}</td>
-          <td>${p.programa.totalMemory}</td>
-          <td>${Lis_Frag[i]}</td>
+          <td>${p.programa.totalMemory.toFixed(2)}</td>
+          <td>${listaFrag[i]?.toFixed(2)}</td>
           <td><button data-action="finalizar" data-index="${i}">Finalizar</button></td>
         </tr>
       `;
@@ -130,57 +184,44 @@ function actualizarVista() {
     });
 
     html += `</tbody></table>`;
-    ramEstado.innerHTML = html;
+    contenedor.innerHTML = html;
 
     // Eventos de finalizar
-    ramEstado.querySelectorAll("button[data-action]").forEach(btn => {
+    contenedor.querySelectorAll("button[data-action]").forEach(btn => {
         btn.addEventListener("click", () => {
             const index = parseInt(btn.dataset.index);
-            try {
-                ram.finalizarPrograma(index);
-                actualizarVista();
-            } catch (err) {
-                alert("Error: " + err.message);
-            }
+            ram.finalizarPrograma(index);
+            listaFrag[index] = null;
+            actualizarVista(ram, contenedor, listaFrag, titulo);
         });
     });
-
-    // Calcular resumen
-    const totalUsado = estado
-        .filter(p => p.ocupado && p.programa)
-        .reduce((acc, p) => acc + p.programa.totalMemory, 0);
-
-    const totalFragmentacion = estado.reduce((acc, p) => {
-        return acc + parseFloat(p.fragmentacion);
-    }, 0);
-
-    ramUso.textContent =
-        `RAM usada: ${totalUsado.toFixed(2)} MB de ${ram.capacidad} MB | ` +
-        `Fragmentación total: ${totalFragmentacion.toFixed(2)} MB`;
 }
 
-// --- Manejo del formulario de creación de programas ---
-const form = document.getElementById("formPrograma");
-form.addEventListener("submit", e => {
+// Utilidad para redondear
+function redondear(num, decimales = 2) {
+    const factor = Math.pow(10, decimales);
+    return Math.round(num * factor) / factor;
+}
+
+// --- Evento para el formulario ---
+document.getElementById("formPrograma").addEventListener("submit", e => {
     e.preventDefault();
+
     const nombre = document.getElementById("progNombre").value.trim();
     const memoria = parseFloat(document.getElementById("progMemoria").value);
 
     if (!nombre || isNaN(memoria) || memoria <= 0) {
-        alert("Datos inválidos");
+        alert("Por favor ingrese un nombre válido y una memoria mayor a 0");
         return;
     }
 
-    // Agregar a la lista
     programasDisponibles.push({ name: nombre, memoryToUse: memoria });
-
-    // Limpiar formulario
-    form.reset();
-
-    // Volver a renderizar tabla
     renderListaProgramas();
+    e.target.reset();
 });
 
 // Inicializar
 renderListaProgramas();
-actualizarVista();
+actualizarVista(ramPrimer, ramPrimerEstado, Lis_Frag_Primer, "Primer Ajuste");
+actualizarVista(ramMejor, ramMejorEstado, Lis_Frag_Mejor, "Mejor Ajuste");
+actualizarVista(ramPeor, ramPeorEstado, Lis_Frag_Peor, "Peor Ajuste");
