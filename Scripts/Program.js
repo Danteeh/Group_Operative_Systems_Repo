@@ -11,7 +11,7 @@ export class Program {// Cambiamos la forma en sacar la memoria total el otro me
         return this.memoryToUse + this.sumPileAmount;
     }
     //Para enviar la info del programa al arreglo
-    info() {
+    get info() {
         return {
             name: this.name,
             header: Program.HEADER,
