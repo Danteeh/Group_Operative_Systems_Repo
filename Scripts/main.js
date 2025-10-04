@@ -22,13 +22,15 @@ const listaProgramas = document.getElementById("listaProgramas");
 const ramEstado = document.getElementById("ramEstado");
 const ramUso = document.getElementById("ramUso");
 
-var fragmentacion;
-var Lis_Frag = new Array(16).fill(null);
+// Fragmentación por partición
+let Lis_Frag = new Array(16).fill(null);
 
+// Sistema operativo
 const sistemaOperativo = new Program("S.O.", 0.8, 0.2);
-ram.insertarPrograma(sistemaOperativo,0);
-Lis_Frag[0] = (comprobador_tamfijo[0] - sistemaOperativo.totalMemory).toFixed(2)
-// Mostrar tabla de programas disponibles
+ram.insertarPrograma(sistemaOperativo, 0);
+Lis_Frag[0] = parseFloat((comprobador_tamfijo[0] - sistemaOperativo.totalMemory).toFixed(2));
+
+// --- Renderizar lista de programas disponibles ---
 function renderListaProgramas() {
     let html = `
     <table>
@@ -55,16 +57,15 @@ function renderListaProgramas() {
     html += `</tbody></table>`;
     listaProgramas.innerHTML = html;
 
-    // Eventos de insertar
+    // Evento de inserción
     listaProgramas.querySelectorAll("button").forEach(btn => {
         btn.addEventListener("click", () => {
-            const programName = btn.dataset.program;
-            insertarProgramaEnRAM(programName);
+            insertarProgramaEnRAM(btn.dataset.program);
         });
     });
 }
 
-// Insertar programa en la primera partición libre
+// --- Insertar programa en la RAM ---
 function insertarProgramaEnRAM(programName) {
     const datos = programasDisponibles.find(p => p.name === programName);
     const prog = new Program(datos.name, datos.memoryToUse, HEAP_PILA);
@@ -79,8 +80,8 @@ function insertarProgramaEnRAM(programName) {
     if (validarTamFijo(prog, libre)) {
         try {
             ram.insertarPrograma(prog, libre);
-            fragmentacion = (comprobador_tamfijo[libre] - prog.totalMemory).toFixed(2);
-            Lis_Frag[libre] = parseFloat(fragmentacion);
+            const frag = comprobador_tamfijo[libre] - prog.totalMemory;
+            Lis_Frag[libre] = frag >= 0 ? parseFloat(frag.toFixed(2)) : 0;
             actualizarVista();
         } catch (err) {
             alert("Error: " + err.message);
@@ -90,11 +91,11 @@ function insertarProgramaEnRAM(programName) {
     }
 }
 
-// Mostrar tabla + vista gráfica de la RAM
+// --- Mostrar tabla + vista gráfica de la RAM ---
 function actualizarVista() {
     const estado = ram.getEstado();
 
-    // 🔹 Tabla
+    // Tabla de estado
     let html = `
     <table>
       <thead>
@@ -111,15 +112,15 @@ function actualizarVista() {
 
     estado.forEach((p, i) => {
         if (p.ocupado && p.programa) {
+            const frag = typeof Lis_Frag[i] === "number" ? Lis_Frag[i].toFixed(2) : "-";
             html += `
         <tr>
           <td>${i}</td>
           <td>${p.programa.name}</td>
           <td>${p.programa.totalMemory.toFixed(2)}</td>
-          <td>${Lis_Frag[i]}</td>
+          <td>${frag}</td>
           <td>${p.programa.name === "S.O." ? "Protegido" : `<button data-action="finalizar" data-index="${i}">Finalizar</button>`}</td>
-        </tr>
-      `;
+        </tr>`;
         } else {
             html += `
         <tr>
@@ -128,15 +129,14 @@ function actualizarVista() {
           <td>-</td>
           <td>${comprobador_tamfijo[i]}</td>
           <td>Libre</td>
-        </tr>
-      `;
+        </tr>`;
         }
     });
 
     html += `</tbody></table>`;
     ramEstado.innerHTML = html;
 
-    // Eventos de finalizar
+    // Evento de finalizar programa
     ramEstado.querySelectorAll("button[data-action]").forEach(btn => {
         btn.addEventListener("click", () => {
             const index = parseInt(btn.dataset.index);
@@ -150,7 +150,7 @@ function actualizarVista() {
         });
     });
 
-    // 🔹 Vista gráfica de memoria
+    // Vista gráfica de RAM
     const contenedor = document.createElement("div");
     contenedor.classList.add("ram-grafica");
 
@@ -159,19 +159,17 @@ function actualizarVista() {
         particionDiv.classList.add("particion");
 
         if (p.ocupado && p.programa) {
-            // Bloque verde (programa)
             const bloque = document.createElement("div");
             bloque.classList.add("ocupado");
-            bloque.style.height = `${(p.programa.totalMemory * 100)}%`;
+            bloque.style.height = `${p.programa.totalMemory * 100}%`;
             bloque.textContent = `${p.programa.name} (${p.programa.totalMemory.toFixed(2)}MB)`;
             particionDiv.appendChild(bloque);
 
-            // Bloque gris (fragmentación)
             if (Lis_Frag[i] > 0) {
                 const frag = document.createElement("div");
                 frag.classList.add("fragmento");
                 frag.style.height = `${Lis_Frag[i] * 100}%`;
-                frag.textContent = `Frag: ${Lis_Frag[i]}MB`;
+                frag.textContent = `Frag: ${Lis_Frag[i].toFixed(2)}MB`;
                 particionDiv.appendChild(frag);
             }
         } else {
@@ -188,14 +186,16 @@ function actualizarVista() {
         .filter(p => p.ocupado && p.programa)
         .reduce((acc, p) => acc + p.programa.totalMemory, 0);
 
-    const totalFragmentacion = Lis_Frag.reduce((acc, f) => acc + (f ? f : 0), 0);
+    const totalFragmentacion = Lis_Frag
+        .filter(f => typeof f === "number" && !isNaN(f))
+        .reduce((acc, f) => acc + f, 0);
 
     ramUso.textContent =
         `RAM usada: ${totalUsado.toFixed(2)} MB de ${ram.capacidad} MB | ` +
         `Fragmentación total: ${totalFragmentacion.toFixed(2)} MB`;
 }
 
-// --- Manejo del formulario de creación de programas ---
+// --- Formulario de creación de programas ---
 const form = document.getElementById("formPrograma");
 form.addEventListener("submit", e => {
     e.preventDefault();
@@ -207,13 +207,8 @@ form.addEventListener("submit", e => {
         return;
     }
 
-    // Agregar a la lista
     programasDisponibles.push({ name: nombre, memoryToUse: memoria });
-
-    // Limpiar formulario
     form.reset();
-
-    // Volver a renderizar tabla
     renderListaProgramas();
 });
 

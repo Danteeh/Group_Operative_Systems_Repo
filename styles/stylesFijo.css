@@ -1,0 +1,147 @@
+/* Estilo general */
+body {
+  font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+  background-color: #006989;
+  color: #eaebed;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+
+/* Contenedor principal */
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* Títulos */
+h1, h2, h3 {
+  color: #ffffff;
+  text-align: center;
+  margin-top: 20px;
+  letter-spacing: 0.5px;
+}
+
+/* Formularios */
+form {
+  background: #ffffff;
+  color: #004E5F;
+  padding: 20px;
+  margin: 30px auto;
+  border-radius: 10px;
+  box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.25);
+  width: 80%;
+}
+
+form label {
+  display: block;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+form input {
+  padding: 8px 10px;
+  margin-top: 5px;
+  border: 1px solid #A3BAC3;
+  border-radius: 6px;
+  width: calc(100% - 24px);
+}
+
+/* Botones */
+button {
+  background-color: #00A6A6;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s, transform 0.1s;
+}
+
+button:hover {
+  background-color: #004E5F;
+  transform: scale(1.03);
+}
+
+/* Tablas */
+table {
+  border-collapse: collapse;
+  margin: 25px auto;
+  width: 90%;
+  background: #ffffff;
+  color: #004E5F;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0px 2px 8px rgba(0,0,0,0.2);
+}
+
+th {
+  background-color: #00A6A6;
+  color: #ffffff;
+  padding: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+td {
+  border: 1px solid #A3BAC3;
+  padding: 10px;
+  text-align: center;
+}
+
+tr:nth-child(even) {
+  background-color: #f3f7f8;
+}
+
+/* Estado de RAM */
+.ram-grafica {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.particion {
+  background: #ffffff;
+  color: #004E5F;
+  width: 60px;
+  height: 120px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  font-size: 0.8rem;
+  box-shadow: 0px 1px 5px rgba(0,0,0,0.15);
+  position: relative;
+}
+
+.particion .ocupado {
+  background-color: #00A6A6;
+  color: #ffffff;
+  width: 100%;
+  text-align: center;
+  border-radius: 6px 6px 0 0;
+}
+
+.particion .fragmento {
+  background-color: #A3BAC3;
+  color: #004E5F;
+  width: 100%;
+  text-align: center;
+  border-radius: 0 0 6px 6px;
+  font-size: 0.7rem;
+}
+
+/* Pie de estado */
+#ramUso {
+  text-align: center;
+  font-weight: bold;
+  font-size: 1rem;
+  margin-top: 25px;
+  color: #ffffff;
+}
