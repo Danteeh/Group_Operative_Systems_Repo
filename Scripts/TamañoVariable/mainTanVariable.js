@@ -1,5 +1,5 @@
 import { Program } from "../Program.js";
-import { Ram } from "../TamañoVariable/RamVariable.js";
+import { Ram } from "../Ram.js";
 import { comprobador } from "../Script_Condiciones.js";
 
 // Constante global: heap/pila fijo (< 1 MB)
@@ -16,17 +16,30 @@ let programasDisponibles = [
 
 // Creamos 3 RAM distintas para comparar
 const ramPrimer = new Ram(16, new Array(9).fill(null));
-const ramMejor  = new Ram(16, new Array(9).fill(null));
-const ramPeor   = new Ram(16, new Array(9).fill(null));
+const ramMejor = new Ram(16, new Array(9).fill(null));
+const ramPeor = new Ram(16, new Array(9).fill(null));
 
-const listaProgramas   = document.getElementById("listaProgramas");
-const ramPrimerEstado  = document.getElementById("ramPrimerEstado");
-const ramMejorEstado   = document.getElementById("ramMejorEstado");
-const ramPeorEstado    = document.getElementById("ramPeorEstado");
+const listaProgramas = document.getElementById("listaProgramas");
+const ramPrimerEstado = document.getElementById("ramPrimerEstado");
+const ramMejorEstado = document.getElementById("ramMejorEstado");
+const ramPeorEstado = document.getElementById("ramPeorEstado");
 
 let Lis_Frag_Primer = new Array(9).fill(null);
-let Lis_Frag_Mejor  = new Array(9).fill(null);
-let Lis_Frag_Peor   = new Array(9).fill(null);
+let Lis_Frag_Mejor = new Array(9).fill(null);
+let Lis_Frag_Peor = new Array(9).fill(null);
+
+
+const sistemaOperativo = new Program("S.O.", 0.8, 0.2);
+ramPrimer.insertarPrograma(sistemaOperativo, 0);
+Lis_Frag_Primer[0] = comprobador[0] - sistemaOperativo.totalMemory;
+
+ramMejor.insertarPrograma(new Program("S.O.", 1, 0), 0);
+Lis_Frag_Mejor[0] = comprobador[0] - 1;
+
+ramPeor.insertarPrograma(new Program("S.O.", 1, 0), 0);
+Lis_Frag_Peor[0] = comprobador[0] - 1;
+
+
 
 // Mostrar tabla de programas disponibles
 function renderListaProgramas() {
@@ -71,7 +84,7 @@ function insertarPrimerAjuste(programName) {
     const datos = programasDisponibles.find(p => p.name === programName);
     const prog = new Program(datos.name, datos.memoryToUse, HEAP_PILA);
 
-    let indice = ramPrimer.particiones.findIndex((p, i) => 
+    let indice = ramPrimer.particiones.findIndex((p, i) =>
         p === null && prog.totalMemory <= comprobador[i]
     );
 
@@ -145,6 +158,7 @@ function insertarPeorAjuste(programName) {
 function actualizarVista(ram, contenedor, listaFrag, titulo) {
     const estado = ram.getEstado();
 
+    // Tabla de estado
     let html = `<h3>${titulo}</h3>
     <table>
       <thead>
@@ -167,9 +181,10 @@ function actualizarVista(ram, contenedor, listaFrag, titulo) {
           <td>${p.programa.name}</td>
           <td>${p.programa.totalMemory.toFixed(2)}</td>
           <td>${listaFrag[i]?.toFixed(2)}</td>
-          <td><button data-action="finalizar" data-index="${i}">Finalizar</button></td>
-        </tr>
-      `;
+          <td>${p.programa.name === "S.O." ? "Protegido" : 
+        `<button data-action="finalizar" data-index="${i}">Finalizar</button>`}
+      </td>
+        </tr>`;
         } else {
             html += `
         <tr>
@@ -178,12 +193,34 @@ function actualizarVista(ram, contenedor, listaFrag, titulo) {
           <td>-</td>
           <td>${comprobador[i]}</td>
           <td>Libre</td>
-        </tr>
-      `;
+        </tr>`;
         }
     });
 
     html += `</tbody></table>`;
+
+    // 🔹 Agregar gráfica
+    html += `<div class="ram-grafica">`;
+    estado.forEach((p, i) => {
+        html += `<div class="particion">`;
+        if (p.ocupado && p.programa) {
+            html += `
+              <div class="ocupado" style="height:${p.programa.totalMemory * 100}%">
+                ${p.programa.name}<br>${p.programa.totalMemory.toFixed(2)}MB
+              </div>`;
+            if (listaFrag[i] > 0) {
+                html += `
+                  <div class="fragmento" style="height:${listaFrag[i] * 100}%">
+                    Frag ${listaFrag[i].toFixed(2)}MB
+                  </div>`;
+            }
+        } else {
+            html += `<div class="libre">Libre<br>${comprobador[i]}MB</div>`;
+        }
+        html += `</div>`;
+    });
+    html += `</div>`;
+
     contenedor.innerHTML = html;
 
     // Eventos de finalizar
@@ -196,6 +233,7 @@ function actualizarVista(ram, contenedor, listaFrag, titulo) {
         });
     });
 }
+
 
 // Utilidad para redondear
 function redondear(num, decimales = 2) {

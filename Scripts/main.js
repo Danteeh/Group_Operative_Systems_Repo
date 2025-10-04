@@ -1,4 +1,4 @@
-import { Program} from "./Program.js";
+import { Program } from "./Program.js";
 import { Ram } from "./Ram.js";
 import { validarPrimerAjuste, validarTamFijo, comprobador_tamfijo } from "./Script_Condiciones.js";
 
@@ -15,7 +15,6 @@ let programasDisponibles = [
 ];
 
 // Creamos la RAM de 16 MB
-
 const particiones = new Array(16).fill(null);
 const ram = new Ram(16, particiones);
 
@@ -25,6 +24,10 @@ const ramUso = document.getElementById("ramUso");
 
 var fragmentacion;
 var Lis_Frag = new Array(16).fill(null);
+
+const sistemaOperativo = new Program("S.O.", 0.8, 0.2);
+ram.insertarPrograma(sistemaOperativo,0);
+Lis_Frag[0] = (comprobador_tamfijo[0] - sistemaOperativo.totalMemory).toFixed(2)
 // Mostrar tabla de programas disponibles
 function renderListaProgramas() {
     let html = `
@@ -87,10 +90,11 @@ function insertarProgramaEnRAM(programName) {
     }
 }
 
-// Mostrar tabla de la RAM
+// Mostrar tabla + vista gráfica de la RAM
 function actualizarVista() {
     const estado = ram.getEstado();
 
+    // 🔹 Tabla
     let html = `
     <table>
       <thead>
@@ -113,7 +117,7 @@ function actualizarVista() {
           <td>${p.programa.name}</td>
           <td>${p.programa.totalMemory.toFixed(2)}</td>
           <td>${Lis_Frag[i]}</td>
-          <td><button data-action="finalizar" data-index="${i}">Finalizar</button></td>
+          <td>${p.programa.name === "S.O." ? "Protegido" : `<button data-action="finalizar" data-index="${i}">Finalizar</button>`}</td>
         </tr>
       `;
         } else {
@@ -138,6 +142,7 @@ function actualizarVista() {
             const index = parseInt(btn.dataset.index);
             try {
                 ram.finalizarPrograma(index);
+                Lis_Frag[index] = null;
                 actualizarVista();
             } catch (err) {
                 alert("Error: " + err.message);
@@ -145,14 +150,45 @@ function actualizarVista() {
         });
     });
 
+    // 🔹 Vista gráfica de memoria
+    const contenedor = document.createElement("div");
+    contenedor.classList.add("ram-grafica");
+
+    estado.forEach((p, i) => {
+        const particionDiv = document.createElement("div");
+        particionDiv.classList.add("particion");
+
+        if (p.ocupado && p.programa) {
+            // Bloque verde (programa)
+            const bloque = document.createElement("div");
+            bloque.classList.add("ocupado");
+            bloque.style.height = `${(p.programa.totalMemory * 100)}%`;
+            bloque.textContent = `${p.programa.name} (${p.programa.totalMemory.toFixed(2)}MB)`;
+            particionDiv.appendChild(bloque);
+
+            // Bloque gris (fragmentación)
+            if (Lis_Frag[i] > 0) {
+                const frag = document.createElement("div");
+                frag.classList.add("fragmento");
+                frag.style.height = `${Lis_Frag[i] * 100}%`;
+                frag.textContent = `Frag: ${Lis_Frag[i]}MB`;
+                particionDiv.appendChild(frag);
+            }
+        } else {
+            particionDiv.textContent = "Libre";
+        }
+
+        contenedor.appendChild(particionDiv);
+    });
+
+    ramEstado.appendChild(contenedor);
+
     // Calcular resumen
     const totalUsado = estado
         .filter(p => p.ocupado && p.programa)
         .reduce((acc, p) => acc + p.programa.totalMemory, 0);
 
-    const totalFragmentacion = estado.reduce((acc, p) => {
-        return acc + parseFloat(p.fragmentacion);
-    }, 0);
+    const totalFragmentacion = Lis_Frag.reduce((acc, f) => acc + (f ? f : 0), 0);
 
     ramUso.textContent =
         `RAM usada: ${totalUsado.toFixed(2)} MB de ${ram.capacidad} MB | ` +
