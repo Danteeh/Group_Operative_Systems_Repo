@@ -30,14 +30,14 @@ let Lis_Frag_Peor = new Array(9).fill(null);
 
 
 const sistemaOperativo = new Program("S.O.", 0.8, 0.2);
-ramPrimer.insertarPrograma(sistemaOperativo, 0);
-Lis_Frag_Primer[0] = comprobador[0] - sistemaOperativo.totalMemory;
+ramPrimer.insertarPrograma(sistemaOperativo, 8);
+Lis_Frag_Primer[8] = comprobador[8] - sistemaOperativo.totalMemory;
 
-ramMejor.insertarPrograma(new Program("S.O.", 1, 0), 0);
-Lis_Frag_Mejor[0] = comprobador[0] - 1;
+ramMejor.insertarPrograma(new Program("S.O.", 1, 0), 8);
+Lis_Frag_Mejor[8] = comprobador[8] - 1;
 
-ramPeor.insertarPrograma(new Program("S.O.", 1, 0), 0);
-Lis_Frag_Peor[0] = comprobador[0] - 1;
+ramPeor.insertarPrograma(new Program("S.O.", 1, 0), 8);
+Lis_Frag_Peor[8] = comprobador[8] - 1;
 
 
 

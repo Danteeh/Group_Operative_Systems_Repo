@@ -7,7 +7,8 @@ export function validarTamFijo(program, indice) {
 
 //Tamaño variable estatico
 //Primer Ajuste
-export const comprobador =[4,4,2,2,1,1,0.5,0.5,1];
+//export const comprobador =[4,4,2,2,1,1,0.5,0.5,1];
+export const comprobador =[0.5,0.5,1,1,2,2,4,4,1];
 export function validarPrimerAjuste(proram, indice){
     return proram.totalMemory <= comprobador[indice];
 }
