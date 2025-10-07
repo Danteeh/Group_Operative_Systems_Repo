@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador de RAM</title>
+  <link rel="stylesheet" href="../styles/stylesFijo.css">
+</head>
+<body>
+  <h1>Gestión de Memoria</h1>
+
+  <!-- Formulario para crear programas -->
+  <h2>Crear Programa</h2>
+  <form id="formPrograma">
+    <label>Nombre: <input type="text" id="progNombre" required></label>
+    <label>Memoria (MB): <input type="number" id="progMemoria" step="0.1" min="0.1" required></label>
+    <button type="submit">Agregar a lista</button>
+  </form>
+
+  <!-- Tabla de programas disponibles -->
+  <h2>Programas Disponibles</h2>
+  <div id="listaProgramas"></div>
+
+  <!-- Estado de la RAM -->
+  <h2>Estado de la RAM</h2>
+  <p id="ramUso"></p>
+  <div id="ramEstado"></div>
+
+  <script type="module" src="../Scripts/EsticasFijas/main.js"></script>
+</body>
+</html>

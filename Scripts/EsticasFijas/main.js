@@ -1,6 +1,6 @@
-import { Program } from "./Program.js";
-import { Ram } from "./Ram.js";
-import { validarPrimerAjuste, validarTamFijo, comprobador_tamfijo } from "./Script_Condiciones.js";
+import { Program } from "../Program.js";
+import { Ram } from "../Ram.js";
+import { validarPrimerAjuste, validarTamFijo, comprobador_tamfijo } from "../Script_Condiciones.js";
 
 // Constante global: heap/pila fijo (< 1 MB)
 const HEAP_PILA = 0.2;

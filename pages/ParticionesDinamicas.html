@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Simulador de Particiones Dinámicas</title>
+    <!-- Ruta relativa al CSS desde Scripts/ParticionesDinamicas -->
+    <link rel="stylesheet" href="../styles/stylesFijo.css">
+    <style>
+        table {
+            border-collapse: collapse;
+            margin: 15px auto;
+            width: 80%;
+        }
+
+        th,
+        td {
+            border: 1px solid #333;
+            padding: 6px 12px;
+            text-align: center;
+        }
+
+        h3 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #ramContenedor {
+            display: block;
+            width: 100%;
+        }
+
+        #ramContenedor>div {
+            margin-bottom: 30px;
+        }
+
+        .grupo {
+            margin-bottom: 20px;
+            padding: 10px 0;
+        }
+
+        .mini-title {
+            text-align: center;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+
+        /* Visual RAM bar */
+        .ram-visual {
+            display: flex;
+            height: 28px;
+            width: 80%;
+            margin: 8px auto;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+        }
+
+        .ram-block {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #fff;
+        }
+
+        .ram-block.occupied {
+            background: #00A6A6;
+        }
+
+        .ram-block.free {
+            background: #A3BAC3;
+            color: #004E5F;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .metrics {
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>Gestión de Memoria — Particiones Dinámicas</h1>
+
+    <!-- Formulario para crear programas -->
+    <h2>Crear Programa</h2>
+    <form id="formPrograma">
+        <label>Nombre:
+            <input type="text" id="progNombre" required>
+        </label>
+        <label>Memoria (MiB):
+            <input type="number" id="progMemoria" step="0.1" min="0.1" required>
+        </label>
+        <button type="submit">Agregar a lista</button>
+    </form>
+
+    <!-- Lista de programas -->
+    <h2>Programas Disponibles</h2>
+    <div id="listaProgramas"></div>
+
+    <!-- Contenedores: sin compactación (3 algoritmos) y con compactación (3 algoritmos) -->
+    <h2>Particiones dinámicas SIN compactación</h2>
+    <div id="ramContenedorNoCompact" class="grupo">
+        <div id="ramNo_PrimerEstado"></div>
+        <div id="ramNo_MejorEstado"></div>
+        <div id="ramNo_PeorEstado"></div>
+    </div>
+
+    <h2>Particiones dinámicas CON compactación</h2>
+    <div id="ramContenedorCompact" class="grupo">
+        <div id="ramC_PrimerEstado"></div>
+        <div id="ramC_MejorEstado"></div>
+        <div id="ramC_PeorEstado"></div>
+    </div>
+
+    <script type="module" src="../Scripts/ParticionesDinamicas/mainParticionesDinamicas.js"></script>
+</body>
+
+</html>
