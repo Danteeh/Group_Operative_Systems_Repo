@@ -26,7 +26,7 @@ const ramUso = document.getElementById("ramUso");
 let Lis_Frag = new Array(16).fill(null);
 
 // Sistema operativo
-const sistemaOperativo = new Program("S.O.", 0.8, 0.2);
+const sistemaOperativo = new Program(0, "S.O.", 0.8, 0.2);
 ram.insertarPrograma(sistemaOperativo, 0);
 Lis_Frag[0] = parseFloat((comprobador_tamfijo[0] - sistemaOperativo.totalMemory).toFixed(2));
 
@@ -56,19 +56,20 @@ function renderListaProgramas() {
 
     html += `</tbody></table>`;
     listaProgramas.innerHTML = html;
-
+    let indice = 0;
     // Evento de inserción
     listaProgramas.querySelectorAll("button").forEach(btn => {
         btn.addEventListener("click", () => {
-            insertarProgramaEnRAM(btn.dataset.program);
+            indice = indice +1; 
+            insertarProgramaEnRAM(btn.dataset.program,indice);
         });
     });
 }
 
 // --- Insertar programa en la RAM ---
-function insertarProgramaEnRAM(programName) {
+function insertarProgramaEnRAM(programName,PID) {
     const datos = programasDisponibles.find(p => p.name === programName);
-    const prog = new Program(datos.name, datos.memoryToUse, HEAP_PILA);
+    const prog = new Program(PID,datos.name, datos.memoryToUse, HEAP_PILA);
 
     // Buscar primera partición libre
     const libre = ram.particiones.findIndex(p => p === null);

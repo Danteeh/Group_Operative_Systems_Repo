@@ -29,15 +29,15 @@ let Lis_Frag_Mejor = new Array(9).fill(null);
 let Lis_Frag_Peor = new Array(9).fill(null);
 
 
-const sistemaOperativo = new Program("S.O.", 0.8, 0.2);
-ramPrimer.insertarPrograma(sistemaOperativo, 8);
-Lis_Frag_Primer[8] = comprobador[8] - sistemaOperativo.totalMemory;
+const sistemaOperativo = new Program(0, "S.O.", 0.8, 0.2);
+ramPrimer.insertarPrograma(sistemaOperativo, 0);
+Lis_Frag_Primer[0] = comprobador[0] - sistemaOperativo.totalMemory;
 
-ramMejor.insertarPrograma(new Program("S.O.", 1, 0), 8);
-Lis_Frag_Mejor[8] = comprobador[8] - 1;
+ramMejor.insertarPrograma(sistemaOperativo, 0);
+Lis_Frag_Mejor[0] = comprobador[0] - 1;
 
-ramPeor.insertarPrograma(new Program("S.O.", 1, 0), 8);
-Lis_Frag_Peor[8] = comprobador[8] - 1;
+ramPeor.insertarPrograma(sistemaOperativo, 0);
+Lis_Frag_Peor[0] = comprobador[0] - 1;
 
 
 
@@ -67,22 +67,24 @@ function renderListaProgramas() {
 
     html += `</tbody></table>`;
     listaProgramas.innerHTML = html;
-
+    let indice = 0;
     // Eventos de insertar en los tres esquemas
     listaProgramas.querySelectorAll("button").forEach(btn => {
         btn.addEventListener("click", () => {
             const programName = btn.dataset.program;
-            insertarPrimerAjuste(programName);
-            insertarMejorAjuste(programName);
-            insertarPeorAjuste(programName);
+            indice = indice+1;
+            insertarPrimerAjuste(programName,indice);
+            insertarMejorAjuste(programName,indice);
+            insertarPeorAjuste(programName,indice);
         });
     });
 }
 
+
 // Primer Ajuste
-function insertarPrimerAjuste(programName) {
+function insertarPrimerAjuste(programName, PID) {
     const datos = programasDisponibles.find(p => p.name === programName);
-    const prog = new Program(datos.name, datos.memoryToUse, HEAP_PILA);
+    const prog = new Program(PID,datos.name, datos.memoryToUse, HEAP_PILA);
 
     let indice = ramPrimer.particiones.findIndex((p, i) =>
         p === null && prog.totalMemory <= comprobador[i]
@@ -99,9 +101,9 @@ function insertarPrimerAjuste(programName) {
 }
 
 // Mejor Ajuste
-function insertarMejorAjuste(programName) {
+function insertarMejorAjuste(programName, PID) {
     const datos = programasDisponibles.find(p => p.name === programName);
-    const prog = new Program(datos.name, datos.memoryToUse, HEAP_PILA);
+    const prog = new Program(PID,datos.name, datos.memoryToUse, HEAP_PILA);
 
     let mejorIndice = -1;
     let mejorEspacio = Infinity;
@@ -127,9 +129,9 @@ function insertarMejorAjuste(programName) {
 }
 
 // Peor Ajuste
-function insertarPeorAjuste(programName) {
+function insertarPeorAjuste(programName,PID) {
     const datos = programasDisponibles.find(p => p.name === programName);
-    const prog = new Program(datos.name, datos.memoryToUse, HEAP_PILA);
+    const prog = new Program(PID,datos.name, datos.memoryToUse, HEAP_PILA);
 
     let peorIndice = -1;
     let peorEspacio = -1;

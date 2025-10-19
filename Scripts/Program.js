@@ -1,7 +1,8 @@
 export const HEADER = 745; // Lo dejamos como una constante global para que se cargue una vez y ya
 //Incluimos export para poder importar la clase o la constante en otras clases
 export class Program {// Cambiamos la forma en sacar la memoria total el otro metodo no era optimo
-    constructor(name, memoryToUse, sumPileAmount) {
+    constructor(id, name, memoryToUse, sumPileAmount) {
+        this.id = id;
         this.name = name;
         this.memoryToUse = memoryToUse;
         this.sumPileAmount = sumPileAmount;
@@ -13,6 +14,7 @@ export class Program {// Cambiamos la forma en sacar la memoria total el otro me
     //Para enviar la info del programa al arreglo
     get info() {
         return {
+            id: this.id,
             name: this.name,
             header: Program.HEADER,
             memoryToUse: this.memoryToUse,
