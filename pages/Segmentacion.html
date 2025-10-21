@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación de Segmentación</title>
+    <link rel="stylesheet" href="../styles/stylesSegmentacion.css">
+    <script type="module" src="../Scripts/Segmentacion/segmentacion.js" defer></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">Gestión de Memoria</h1>
+            <ul class="nav-links">
+                <li><a href="../index.html">Inicio</a></li>
+                <li><a href="./EstaticasFijas.html">Particiones Fijas</a></li>
+                <li><a href="./VariablePrimerAjuste.html">Particiones Variables</a></li>
+                <li><a href="./ParticionesDinamicas.html">Particiones Dinámicas</a></li>
+                <li><a href="./Segmentacion.html" class="active">Segmentación</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h2>Simulación de Segmentación de Memoria</h2>
+        <section class="form-section">
+            <div class="input-group">
+                <label>Nombre del programa:</label>
+                <input type="text" id="nombrePrograma" placeholder="Ej: Editor">
+            </div>
+            <div class="input-group">
+                <label>Segmentos (en MB):</label>
+                <input type="number" id="codigo" placeholder="Código" min="0.1" step="0.1">
+                <input type="number" id="datos" placeholder="Datos" min="0.1" step="0.1">
+                <input type="number" id="pila" placeholder="Pila" min="0.1" step="0.1">
+            </div>
+            <button id="btnInsertar">Insertar Programa</button>
+        </section>
+
+        <section class="tablas">
+            <div class="tabla">
+                <h3>Tabla de Segmentos</h3>
+                <table id="tablaSegmentos">
+                    <thead>
+                        <tr>
+                            <th>Programa</th>
+                            <th>Segmento</th>
+                            <th>Tamaño (MB)</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="tabla">
+                <h3>Memoria RAM (16 MB)</h3>
+                <table id="tablaRam">
+                    <thead>
+                        <tr>
+                            <th>Bloque</th>
+                            <th>Estado</th>
+                            <th>Programa</th>
+                            <th>Segmento</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Developed by: Miguel Chávez | Jaider Carvajal | Nelson Posso</p>
+    </footer>
+</body>
+
+</html>
