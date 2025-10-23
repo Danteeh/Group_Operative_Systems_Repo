@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Segmentación de Memoria</title>
+    <link rel="stylesheet" href="../styles/stylesSegmentacion.css" />
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">Gestión de Memoria</h1>
+            <ul class="nav-links">
+                <li><a href="../index.html">Inicio</a></li>
+                <li><a href="./EstaticasFijas.html">Particiones Fijas</a></li>
+                <li><a href="./VariablePrimerAjuste.html">Particiones Variables</a></li>
+                <li><a href="./ParticionesDinamicas.html">Particiones Dinámicas</a></li>
+                <li><a href="./Segmentacion.html" class="active">Segmentación</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h2>Simulación de Segmentación de Memoria</h2>
+
+        <!-- Formulario -->
+        <form id="program-form" class="form-seg">
+            <input type="text" id="prog-name" placeholder="Nombre del programa" required />
+            <input type="number" id="text-size" placeholder=".text (KB)" required />
+            <input type="number" id="data-size" placeholder=".data (KB)" required />
+            <input type="number" id="stack-size" placeholder=".stack (KB)" required />
+            <input type="number" id="heap-size" placeholder=".heap (KB)" required />
+            <div class="form-actions">
+                <button type="submit">Cargar Programa</button>
+                <button type="button" id="finish-btn">Finalizar Programa</button>
+                <button type="button" id="compact-btn">Compactar Memoria</button>
+            </div>
+        </form>
+
+        <!-- Tablas -->
+        <section class="tables">
+            <div class="table-box left-table">
+                <h3>Tabla de Segmentos</h3>
+                <table id="tablaSegmentos">
+                    <thead>
+                        <tr>
+                            <th>Programa</th>
+                            <th>Segmento</th>
+                            <th>Tamaño (KB)</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="table-box right-table">
+                <h3>Espacios Libres (Fragmentación)</h3>
+                <table id="tablaFragmentacion">
+                    <thead>
+                        <tr>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Tamaño (KB)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Gráfico horizontal -->
+        <section class="graphic-section">
+            <h3>Representación gráfica (horizontal)</h3>
+            <div id="ram-horizontal" class="ram-horizontal"></div>
+            <div id="ram-legend" class="ram-legend"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Developed by Miguel Chávez, Nelson Posso, Jaider Marín</p>
+    </footer>
+
+    <!-- Script principal -->
+    <script type="module" src="../Scripts/Paginacion/paginacion.js"></script>
+</body>
+
+</html>
