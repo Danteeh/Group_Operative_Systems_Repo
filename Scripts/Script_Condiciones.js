@@ -13,3 +13,21 @@ export function validarPrimerAjuste(proram, indice){
     return proram.totalMemory <= comprobador[indice];
 }
 
+//todo Paginacion logica
+export const numeroPaginas = 16;
+export function tamPaginas(tamRam){
+    if(tamRam == 8){
+        tamPaginas = 0.5;
+    }
+    else if(tamRam == 16 ){
+        tamPaginas = 1;
+    }
+    else if(tamRam == 32){
+        tamPaginas = 2;
+    }
+    else {
+        tamPaginas = 0;
+        console.log("El equipo no cumple con los requisitos del sistema");
+    }
+return tamPaginas;
+}
