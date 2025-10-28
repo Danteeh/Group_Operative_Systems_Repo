@@ -172,7 +172,7 @@ function renderProgramasDetalle() {
         const header = document.createElement("div");
         header.classList.add("program-card-header");
         header.innerHTML = `
-            <h4>🖥️ Sistema Operativo</h4>
+            <h4>Sistema Operativo</h4>
             <div class="total-memory">Total: ${segSO.tamano} KB</div>
         `;
         cardSO.appendChild(header);

@@ -18,12 +18,13 @@
                 <li><a href="./VariablePrimerAjuste.html">Particiones Variables</a></li>
                 <li><a href="./ParticionesDinamicas.html">Particiones Dinámicas</a></li>
                 <li><a href="./Segmentacion.html" class="active">Segmentación</a></li>
+                <li><a href="./Paginacion.html" class="active">Paginación</a></li>
             </ul>
         </div>
     </nav>
 
     <main class="container">
-        <h2>Simulación de Segmentación de Memoria</h2>
+        <h2>Simulación de Paginación de Memoria</h2>
 
         <!-- Formulario -->
         <form id="program-form" class="form-seg">
@@ -34,37 +35,21 @@
             <input type="number" id="heap-size" placeholder=".heap (KB)" required />
             <div class="form-actions">
                 <button type="submit">Cargar Programa</button>
-                <button type="button" id="finish-btn">Finalizar Programa</button>
-                <button type="button" id="compact-btn">Compactar Memoria</button>
+                <button type="button" id="reset-btn">Reiniciar</button>
             </div>
         </form>
 
         <!-- Tablas -->
         <section class="tables">
-            <div class="table-box left-table">
-                <h3>Tabla de Segmentos</h3>
-                <table id="tablaSegmentos">
+            <div class="table-box">
+                <h3>Tabla de Paginas</h3>
+                <table id="tablaPaginas">
                     <thead>
                         <tr>
                             <th>Programa</th>
                             <th>Segmento</th>
-                            <th>Tamaño (KB)</th>
-                            <th>Inicio</th>
-                            <th>Fin</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <div class="table-box right-table">
-                <h3>Espacios Libres (Fragmentación)</h3>
-                <table id="tablaFragmentacion">
-                    <thead>
-                        <tr>
-                            <th>Inicio</th>
-                            <th>Fin</th>
+                            <th>Número de Página</th>
+                            <th>Marco</th>
                             <th>Tamaño (KB)</th>
                         </tr>
                     </thead>
@@ -72,7 +57,6 @@
                 </table>
             </div>
         </section>
-
         <!-- Gráfico horizontal -->
         <section class="graphic-section">
             <h3>Representación gráfica (horizontal)</h3>
