@@ -179,6 +179,111 @@ tr:hover td {
     white-space: nowrap;
 }
 
+/* Sección de detalles de programas */
+.programs-detail-section {
+    margin-top: 2.5em;
+}
+
+.programs-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5em;
+    justify-content: center;
+    margin-top: 1.5em;
+}
+
+.program-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 0.8em;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    min-width: 160px;
+    max-width: 180px;
+    border-top: 3px solid;
+}
+
+.program-card-system {
+    background: linear-gradient(to bottom, #e8f4f8 0%, white 100%);
+    border-top: 3px solid #2b6cb0;
+    box-shadow: 0 4px 8px rgba(43, 108, 176, 0.3);
+}
+
+.program-card-system .program-card-header h4 {
+    color: #2b6cb0;
+    font-weight: 700;
+}
+
+.program-card-header {
+    text-align: center;
+    padding-bottom: 0.6em;
+    border-bottom: 2px solid #006989;
+    margin-bottom: 0.8em;
+}
+
+.program-card-header h4 {
+    margin: 0;
+    font-size: 1em;
+    color: #006989;
+}
+
+.program-card-header .total-memory {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 0.2em;
+}
+
+.segments-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
+}
+
+.segment-block {
+    padding: 0.5em;
+    border-radius: 5px;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+}
+
+.segment-block .segment-name {
+    font-size: 0.85em;
+}
+
+.segment-block .segment-size {
+    font-size: 0.75em;
+    opacity: 0.9;
+}
+
+.segment-block .segment-address {
+    font-size: 0.7em;
+    opacity: 0.85;
+}
+
+/* Colores para cada tipo de segmento */
+.segment-text {
+    background-color: #2b6cb0;
+}
+
+.segment-data {
+    background-color: #d9534f;
+}
+
+.segment-stack {
+    background-color: #5bc0de;
+}
+
+.segment-heap {
+    background-color: #5cb85c;
+}
+
+.segment-system {
+    background-color: #2b6cb0;
+}
+
 /* Footer */
 footer {
     text-align: center;

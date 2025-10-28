@@ -63,6 +63,16 @@ export class RamSegmentada {
         }
     }
 
+    getSegmentosPorPrograma(nombre) {
+        return this.segmentos
+            .filter(seg => seg.programa.name === nombre && !seg.protegido)
+            .map(seg => ({
+                inicio: seg.inicio,
+                fin: seg.fin,
+                tamano: seg.fin - seg.inicio
+            }));
+    }
+
     getEstado() {
         this.segmentos.sort((a, b) => a.inicio - b.inicio);
 
