@@ -339,3 +339,23 @@ table td:last-child {
     flex-wrap: wrap;
     gap: 2em;
 }
+
+#ram-horizontal {
+  display: flex;
+  width: 100%;
+  border: 2px solid #999;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 50px;
+  margin-top: 10px;
+}
+
+.bloque-programa {
+  transition: all 0.2s ease;
+}
+
+.bloque-programa:hover {
+  transform: scale(1.03);
+  filter: brightness(1.1);
+  z-index: 2;
+}
