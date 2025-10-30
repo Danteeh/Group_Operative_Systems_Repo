@@ -26,6 +26,24 @@
     <main class="container">
         <h2>Simulación de Segmentación de Memoria</h2>
 
+        <!-- Programas precargados -->
+        <section class="preloaded">
+            <h3>Programas precargados</h3>
+            <table id="tablaProgramas">
+                <thead>
+                    <tr>
+                        <th>Programa</th>
+                        <th>.text (KB)</th>
+                        <th>.data (KB)</th>
+                        <th>.stack (KB)</th>
+                        <th>.heap (KB)</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
         <!-- Formulario -->
         <form id="program-form" class="form-seg">
             <input type="text" id="prog-name" placeholder="Nombre del programa" required />
@@ -35,8 +53,6 @@
             <input type="number" id="heap-size" placeholder=".heap (KB)" required />
             <div class="form-actions">
                 <button type="submit">Cargar Programa</button>
-                <button type="button" id="finish-btn">Finalizar Programa</button>
-                <button type="button" id="compact-btn">Compactar Memoria</button>
             </div>
         </form>
 
@@ -84,9 +100,7 @@
         <!-- Detalles de Programas Ejecutados -->
         <section class="programs-detail-section">
             <h3>Detalles de Programas en Ejecución</h3>
-            <div id="programs-container" class="programs-container">
-                <!-- Aquí se mostrarán los programas como tarjetas verticales -->
-            </div>
+            <div id="programs-container" class="programs-container"></div>
         </section>
     </main>
 
@@ -94,7 +108,6 @@
         <p>Developed by Miguel Chávez, Nelson Posso, Jaider Marín</p>
     </footer>
 
-    <!-- Script principal -->
     <script type="module" src="../Scripts/Segmentacion/segmentacion.js"></script>
 </body>
 

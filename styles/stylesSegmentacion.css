@@ -375,3 +375,57 @@ table td:last-child {
 .btn-del:hover {
     background-color: #c9302c;
 }
+
+/* ---- Estilos de las cards de programas ---- */
+.programs-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.program-card {
+    background: #ffffff;
+    border: 2px solid #ddd;
+    border-top-width: 6px;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    width: 220px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.program-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+.program-card h4 {
+    margin-bottom: 0.4rem;
+    color: #333;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.3rem;
+}
+
+.program-card p {
+    margin: 0.3rem 0;
+    font-size: 0.9rem;
+    color: #444;
+}
+
+/* ---- Botón eliminar dentro de la tabla ---- */
+.btn-eliminar {
+    background: #d9534f;
+    border: none;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s ease;
+}
+
+.btn-eliminar:hover {
+    background: #c9302c;
+}
