@@ -297,19 +297,22 @@ footer {
 /* --- Ajuste fino para las tablas --- */
 .table-box {
     flex: 1;
-    min-width: 420px; /* Un poco más ancha */
+    min-width: 420px;
+    /* Un poco más ancha */
     background-color: white;
     color: #006989;
     border-radius: 8px;
     padding: 1em;
     box-sizing: border-box;
-    overflow-x: auto; /* Evita desbordes */
+    overflow-x: auto;
+    /* Evita desbordes */
 }
 
 /* Ajuste de columnas para que el botón quepa bien */
 table th:last-child,
 table td:last-child {
-    width: 90px; /* Espacio suficiente para el botón */
+    width: 90px;
+    /* Espacio suficiente para el botón */
     white-space: nowrap;
 }
 
@@ -341,21 +344,34 @@ table td:last-child {
 }
 
 #ram-horizontal {
-  display: flex;
-  width: 100%;
-  border: 2px solid #999;
-  border-radius: 8px;
-  overflow: hidden;
-  height: 50px;
-  margin-top: 10px;
+    display: flex;
+    width: 100%;
+    border: 2px solid #999;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 50px;
+    margin-top: 10px;
 }
 
 .bloque-programa {
-  transition: all 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .bloque-programa:hover {
-  transform: scale(1.03);
-  filter: brightness(1.1);
-  z-index: 2;
+    transform: scale(1.03);
+    filter: brightness(1.1);
+    z-index: 2;
+}
+
+.btn-del {
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.3em 0.7em;
+    cursor: pointer;
+}
+
+.btn-del:hover {
+    background-color: #c9302c;
 }

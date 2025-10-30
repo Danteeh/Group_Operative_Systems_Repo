@@ -39,24 +39,44 @@
             </div>
         </form>
 
-        <!-- Tablas -->
+        <!-- Sección de tablas -->
         <section class="tables">
+            <!-- Tabla de páginas -->
             <div class="table-box">
-                <h3>Tabla de Paginas</h3>
+                <h3>Tabla de Páginas</h3>
                 <table id="tablaPaginas">
                     <thead>
                         <tr>
                             <th>Programa</th>
                             <th>Segmento</th>
-                            <th>Número de Página</th>
                             <th>Marco</th>
                             <th>Tamaño (KB)</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Tabla de programas disponibles -->
+            <div class="table-box">
+                <h3>Programas Disponibles</h3>
+                <table id="tablaProgramas">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>.text</th>
+                            <th>.data</th>
+                            <th>.stack</th>
+                            <th>.heap</th>
+                            <th>Cargar</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </section>
+
         <!-- Gráfico horizontal -->
         <section class="graphic-section">
             <h3>Representación gráfica (horizontal)</h3>
