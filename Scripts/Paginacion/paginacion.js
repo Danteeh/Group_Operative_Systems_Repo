@@ -8,6 +8,8 @@ let tablaPaginas = document.querySelector("#tablaPaginas tbody");
 console.log(tablaPaginas);
 let ramDiv = document.getElementById("ram-horizontal");
 
+const so = new Program("Sistema Operativo", 4, 4, 4, 4);
+
 function initRam() {
     ramDiv.innerHTML = "";
     paginasUsadas = new Array(total_paginas).fill(null);
@@ -94,7 +96,27 @@ document.getElementById("reset-btn").addEventListener("click",() => {
     initRam();
 });
 
+function agregarSO() {
+    const paginasPorSeg = NumeroPaginas_Programa(so);
+    const paginasSO = paginasPorSeg(so).reduce((a, b) => a + b, 0);
+    pintarPrograma(so.nombre, "#ff5733", paginasSO, 0);
+
+    let numPag = 0;
+    ["text", "data", "stack", "heap"].forEach((seg, i) => {
+        for (let p = 0; p < paginasPorSeg[i]; p++){
+            const fila = document.createElement("tr");
+            fila.innerHTML = `
+                <td>${so.nombre}</td>
+                <td>${numPag++}</td>
+                <td>${p}</td>
+                <td>4</td>
+            `;
+        tablaPaginas.appendChild(fila);
+        }
+    });
+}
+
+
 initRam();
-
-
+agregarSO();
 
