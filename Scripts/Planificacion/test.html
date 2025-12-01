@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Simulación FCFS con Bloqueos - Interactivo</title>
+<style>
+    :root{
+        --bg: #006989;          /* Fondo principal */
+        --card: #ffffff;        /* Fondo tarjetas */
+        --accent: #00A6A6;      /* Color acento */
+        --muted: #A3BAC3;       /* Color secundario */
+        --text: #004E5F;        /* Texto oscuro */
+        --text-light: #eaebed;  /* Texto claro */
+    }
+    
+    body{
+        background: var(--bg);
+        color: var(--text-light);
+        padding: 18px;
+        font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+        line-height: 1.6;
+    }
+    
+    .container{
+        max-width: 1200px;
+        margin: 0 auto;
+        background: var(--card);
+        border-radius: 10px;
+        padding: 24px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        color: var(--text);
+    }
+    
+    h1, h2{
+        color: var(--text);
+        text-align: center;
+        margin-top: 20px;
+        letter-spacing: 0.5px;
+        border-bottom: 3px solid var(--accent);
+        padding-bottom: 12px;
+    }
+    
+    h2{
+        border-bottom: 2px solid var(--accent);
+        margin-top: 30px;
+    }
+    
+    .flex{display:flex;gap:12px;align-items:center;}
+    .grid{display:grid;gap:12px;}
+    
+    .form-row{
+        display:grid;
+        grid-template-columns:60px 70px 70px 70px 60px 40px;
+        gap:8px;
+        align-items:center;
+        margin-bottom:8px;
+    }
+    
+    label.small{
+        font-size:12px;
+        color:var(--muted);
+        display:block;
+        margin-bottom:4px;
+    }
+    
+    input[type="number"], input[type="text"]{
+        width:100%;
+        padding:8px 10px;
+        border-radius:6px;
+        border:1px solid var(--muted);
+        font-family: inherit;
+    }
+    
+    button{
+        background:var(--accent);
+        color:white;
+        border:none;
+        padding:10px 18px;
+        border-radius:6px;
+        cursor:pointer;
+        font-weight:600;
+        font-family: inherit;
+        transition:background 0.3s, transform 0.1s;
+    }
+    
+    button:hover{
+        background:#004E5F;
+        transform:scale(1.03);
+    }
+    
+    button.ghost{
+        background:transparent;
+        color:var(--accent);
+        border:1px solid var(--accent);
+    }
+    
+    button.ghost:hover{
+        background:var(--accent);
+        color:white;
+    }
+    
+    .controls{
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+        margin-bottom:16px;
+    }
+    
+    .results{margin-top:18px;}
+    
+    table{
+        width:100%;
+        border-collapse:collapse;
+        font-size:14px;
+        margin:25px auto;
+        background:var(--card);
+        border-radius:8px;
+        overflow:hidden;
+        box-shadow:0px 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    th{
+        background:var(--accent);
+        color:#ffffff;
+        padding:12px;
+        text-align:center;
+        font-weight:bold;
+        text-transform:uppercase;
+    }
+    
+    td{
+        padding:10px;
+        text-align:center;
+        border:1px solid var(--muted);
+    }
+    
+    tr:nth-child(even){
+        background-color:#f3f7f8;
+    }
+    
+    .timeline-container{
+        margin-top:18px;
+        overflow:auto;
+        border-radius:8px;
+        padding:12px;
+        background:var(--card);
+        border:1px solid var(--muted);
+        box-shadow:0px 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    .timeline-grid{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        min-width:600px;
+    }
+    
+    .timeline-row{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        height:36px;
+    }
+    
+    .process-label{
+        width:60px;
+        text-align:center;
+        font-weight:700;
+        color:var(--text);
+        background:#f3f7f8;
+        padding:5px;
+        border-radius:4px;
+        border:1px solid var(--muted);
+    }
+    
+    .time-track{
+        display:flex;
+        flex:1;
+        gap:4px;
+    }
+    
+    .block{
+        min-width:24px;
+        height:32px;
+        border-radius:4px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-weight:700;
+        color:#fff;
+        font-size:12px;
+        transition:transform 0.2s;
+    }
+    
+    .block:hover{
+        transform:scale(1.05);
+        box-shadow:0 2px 5px rgba(0,0,0,0.2);
+        z-index:10;
+    }
+    
+    .executing{background:#00A6A6;}
+    .blocked{background:#004E5F;}
+    .ready{background:#A3BAC3; color:var(--text);}
+    .empty{background:#f3f7f8; color:var(--muted);}
+    
+    .time-scale{
+        display:flex;
+        margin-left:68px;
+        gap:4px;
+        padding-bottom:8px;
+        border-bottom:1px dashed var(--muted);
+    }
+    
+    .time-tick{
+        min-width:24px;
+        text-align:center;
+        font-size:12px;
+        color:var(--muted);
+    }
+    
+    .legend{
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        margin-top:12px;
+        justify-content:center;
+        padding:15px;
+        background:#f3f7f8;
+        border-radius:5px;
+    }
+    
+    .legend-item{
+        display:flex;
+        align-items:center;
+        gap:8px;
+    }
+    
+    .legend-color{
+        width:18px;
+        height:18px;
+        border-radius:4px;
+    }
+    
+    footer{
+        margin-top:18px;
+        font-size:13px;
+        color:var(--text-light);
+        text-align:center;
+        padding:20px;
+        background:#004E5F;
+        border-radius:6px;
+        box-shadow:0px -2px 6px rgba(0,0,0,0.3);
+    }
+    
+    footer strong{
+        color:var(--accent);
+    }
+    
+    /* Cabecera del formulario */
+    .form-header{
+        display:grid;
+        grid-template-columns:60px 70px 70px 70px 60px 40px;
+        gap:8px;
+        font-weight:700;
+        color:var(--text);
+        margin-bottom:8px;
+        padding-bottom:8px;
+        border-bottom:2px solid var(--accent);
+    }
+    
+    .form-header div{
+        text-align:center;
+        font-size:13px;
+        color:var(--accent);
+    }
+    
+    @media (max-width:700px){
+        .form-row,
+        .form-header{
+            grid-template-columns:1fr 1fr 1fr;
+        }
+        .process-label{
+            width:44px;
+            font-size:13px;
+        }
+        .block{
+            min-width:18px;
+            height:28px;
+            font-size:11px;
+        }
+        .time-tick{
+            min-width:18px;
+            font-size:11px;
+        }
+        .time-scale{
+            margin-left:52px;
+        }
+        button{
+            padding:8px 12px;
+            font-size:14px;
+        }
+    }
+    
+    /* Información para el usuario */
+    .info-text{
+        color:var(--muted);
+        font-size:14px;
+        margin-bottom:20px;
+        text-align:center;
+    }
+    
+    .info-text strong{
+        color:var(--accent);
+    }
+    
+    /* Estado de CPU */
+    .cpu-state{
+        text-align:center;
+        font-weight:bold;
+        margin-top:25px;
+        color:var(--text);
+        font-size:1rem;
+    }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>FCFS con Control de Bloqueos</h1>
+    
+    <p class="info-text">
+      Edita las filas, agrega/quita procesos y presiona <strong>Ejecutar</strong>.<br>
+      Cada proceso se bloquea solo una vez según su valor <strong>bi</strong> (burst de ejecución antes de bloqueo).
+    </p>
+
+    <section>
+      <h2>Entradas de Procesos</h2>
+      
+      <!-- Cabecera del formulario con etiquetas descriptivas -->
+      <div class="form-header">
+        <div title="Nombre del proceso">Proceso</div>
+        <div title="Tiempo de llegada (li)">Llegada</div>
+        <div title="Tiempo total de ejecución (t)">Ejecución</div>
+        <div title="Cada cuánto se bloquea (bi)">Bloqueo-cada</div>
+        <div title="Duración del bloqueo (bd)">Duración</div>
+        <div title="Eliminar fila">Elim.</div>
+      </div>
+      
+      <div id="formProcesses" style="margin-bottom:8px">
+        <!-- Las filas de procesos se generan aquí -->
+      </div>
+
+      <div class="controls">
+        <button id="addRow">➕ Agregar proceso</button>
+        <button class="ghost" id="removeRow">➖ Quitar último</button>
+        <button id="runSim">▶️ Ejecutar simulación</button>
+        <button class="ghost" id="resetDefaults">🔄 Valores por defecto</button>
+      </div>
+    </section>
+
+    <section class="results">
+      <h2>Resultados</h2>
+      <div class="cpu-state">
+        <span id="cpuInfo">Ejecuta la simulación para ver resultados...</span>
+      </div>
+      <div id="tablaResultados"></div>
+
+      <h2>Diagrama de Gantt</h2>
+      <div class="timeline-container">
+        <div id="timeScale" class="time-scale"></div>
+        <div id="diagramaGantt" class="timeline-grid"></div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-color executing"></div><div>Ejecutando</div></div>
+          <div class="legend-item"><div class="legend-color blocked"></div><div>Bloqueado</div></div>
+          <div class="legend-item"><div class="legend-color ready"></div><div>En cola</div></div>
+          <div class="legend-item"><div class="legend-color empty"></div><div>No activo</div></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p><strong>FCFS (First-Come First-Served) con Bloqueos</strong> - Cada proceso se bloquea solo una vez según su bi.</p>
+      <p>Los procesos se ejecutan en orden de llegada. Un proceso con bi=0 nunca se bloquea.</p>
+    </footer>
+  </div>
+
+<script>
+/* Utilities: crear fila de proceso en el formulario */
+function createProcessRow({name='P', li=0, t=1, bi=0, bd=0} = {}) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'form-row';
+
+    const inpName = document.createElement('input');
+    inpName.type = 'text'; 
+    inpName.value = name; 
+    inpName.style.fontWeight='700';
+    inpName.title = "Nombre del proceso (ej: A, B, C...)";
+
+    const inpLi = document.createElement('input');
+    inpLi.type = 'number'; 
+    inpLi.min='0'; 
+    inpLi.value = li;
+    inpLi.title = "Tiempo de llegada al sistema";
+
+    const inpT = document.createElement('input');
+    inpT.type = 'number'; 
+    inpT.min='1'; 
+    inpT.value = t;
+    inpT.title = "Tiempo total de ejecución requerido";
+
+    const inpBi = document.createElement('input');
+    inpBi.type = 'number'; 
+    inpBi.min='0'; 
+    inpBi.value = bi;
+    inpBi.title = "Cada cuántas unidades se bloquea (0 = nunca)";
+
+    const inpBd = document.createElement('input');
+    inpBd.type = 'number'; 
+    inpBd.min='0'; 
+    inpBd.value = bd;
+    inpBd.title = "Duración del bloqueo (solo si bi > 0)";
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '✖';
+    removeBtn.title = 'Eliminar esta fila';
+    removeBtn.style.cssText = 'padding: 5px; width: 30px; height: 30px; font-size: 14px;';
+    removeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        wrapper.remove();
+    });
+
+    wrapper.appendChild(inpName);
+    wrapper.appendChild(inpLi);
+    wrapper.appendChild(inpT);
+    wrapper.appendChild(inpBi);
+    wrapper.appendChild(inpBd);
+    wrapper.appendChild(removeBtn);
+
+    return wrapper;
+}
+
+/* Cargar filas iniciales por defecto */
+const formContainer = document.getElementById('formProcesses');
+function loadDefaults(){
+    formContainer.innerHTML = '';
+    const defaults = [
+        {name:'A', li:0, t:6, bi:3, bd:2},
+        {name:'B', li:1, t:8, bi:1, bd:3},
+        {name:'C', li:2, t:7, bi:5, bd:1},
+        {name:'D', li:4, t:3, bi:0, bd:0},
+        {name:'E', li:6, t:9, bi:2, bd:4},
+        {name:'F', li:6, t:2, bi:0, bd:0}
+    ];
+    for (let p of defaults) formContainer.appendChild(createProcessRow(p));
+}
+loadDefaults();
+
+document.getElementById('addRow').addEventListener('click', (e)=>{
+    e.preventDefault();
+    // Generar nombre automático (P1, P2, ...)
+    const rows = formContainer.querySelectorAll('.form-row');
+    const nextNum = rows.length + 1;
+    formContainer.appendChild(createProcessRow({name:`P${nextNum}`, li:0, t:3, bi:0, bd:0}));
+});
+
+document.getElementById('removeRow').addEventListener('click', (e)=>{
+    e.preventDefault();
+    const rows = formContainer.querySelectorAll('.form-row');
+    if (rows.length > 0) rows[rows.length-1].remove();
+});
+
+document.getElementById('resetDefaults').addEventListener('click',(e)=>{
+    e.preventDefault(); 
+    if (confirm('¿Restaurar valores por defecto? Se perderán los cambios actuales.')) {
+        loadDefaults();
+    }
+});
+
+/* Clase interna para simular (no toca DOM) */
+class Proc {
+    constructor(name, li, t, bi, bd) {
+        this.name = String(name);
+        this.li = Number(li);
+        this.t_original = Number(t);
+        this.t = Number(t);
+        this.bi = Number(bi);
+        this.bd = Number(bd);
+
+        this.estado = 'nuevo';
+        this.tiempo_bloqueo_restante = 0;
+        this.contador_ejecucion = 0;
+
+        this.tr = null;
+        this.if = null;
+        this.t_espera = 0;
+        this.t_bloqueo = 0;
+        this.t_ejecucion = 0;
+        this.ya_se_bloqueo = false;
+    }
+}
+
+/* Ejecutar simulación con datos del formulario */
+function runSimulation() {
+    // Leer procesos del formulario
+    const rows = Array.from(formContainer.querySelectorAll('.form-row'));
+    const procesos = rows.map(r => {
+        const inputs = r.querySelectorAll('input');
+        return new Proc(
+            inputs[0].value || 'P',
+            Number(inputs[1].value) || 0,
+            Math.max(1, Number(inputs[2].value) || 1),
+            Math.max(0, Number(inputs[3].value) || 0),
+            Math.max(0, Number(inputs[4].value) || 0)
+        );
+    });
+
+    // Reset containers
+    let listos = [];
+    let bloqueados = [];
+    let terminados = [];
+    let tiempo = 0;
+    let proceso_actual = null;
+    let timeline = [];
+
+    // Por seguridad evitar loops infinitos
+    const safeLimit = procesos.reduce((s,p) => s + p.t_original + p.bd, 0) * 5 + 2000;
+
+    while (terminados.length < procesos.length && tiempo < safeLimit) {
+        // Llegadas
+        for (let p of procesos) {
+            if (p.estado === 'nuevo' && tiempo >= p.li) {
+                p.estado = 'listo';
+                listos.push(p);
+            }
+        }
+
+        // Ordenar listos por tiempo de llegada (li) y luego por nombre para determinismo
+        listos.sort((a,b) => a.li - b.li || a.name.localeCompare(b.name));
+
+        // Actualizar bloqueados
+        for (let p of bloqueados) {
+            p.tiempo_bloqueo_restante = Math.max(0, p.tiempo_bloqueo_restante - 1);
+            p.t_bloqueo++;
+        }
+        
+        // Mover quienes salen de bloqueo
+        for (let i = bloqueados.length - 1; i >= 0; i--) {
+            const p = bloqueados[i];
+            if (p.tiempo_bloqueo_restante === 0) {
+                p.estado = 'listo';
+                p.ya_se_bloqueo = true;
+                p.contador_ejecucion = 0;
+                listos.push(p);
+                bloqueados.splice(i, 1);
+            }
+        }
+
+        // Si no hay proceso actual, tomar de listos
+        if (!proceso_actual && listos.length > 0) {
+            proceso_actual = listos.shift();
+            proceso_actual.estado = 'ejecutando';
+            if (proceso_actual.tr === null) proceso_actual.tr = tiempo - proceso_actual.li;
+        }
+
+        // Ejecutar
+        if (proceso_actual) {
+            timeline.push(proceso_actual.name);
+            proceso_actual.t--;
+            proceso_actual.t_ejecucion++;
+            proceso_actual.contador_ejecucion++;
+
+            // ¿Terminado?
+            if (proceso_actual.t <= 0) {
+                proceso_actual.estado = 'terminado';
+                proceso_actual.if = tiempo + 1;
+                terminados.push(proceso_actual);
+                proceso_actual = null;
+            } else if (proceso_actual.bi > 0 && 
+                       proceso_actual.contador_ejecucion >= proceso_actual.bi && 
+                       !proceso_actual.ya_se_bloqueo) {
+                // Se bloquea
+                proceso_actual.estado = 'bloqueado';
+                proceso_actual.tiempo_bloqueo_restante = proceso_actual.bd;
+                bloqueados.push(proceso_actual);
+                proceso_actual = null;
+            }
+        } else {
+            // CPU idle
+            timeline.push(null);
+        }
+
+        // Incrementar espera para listos
+        for (let p of listos) p.t_espera++;
+
+        tiempo++;
+    }
+
+    // Orden final por nombre para reporte
+    terminados.sort((a,b) => a.name.localeCompare(b.name));
+
+    // Calcular T_total
+    const T_total_sistema = Math.max(...terminados.map(p => p.if));
+
+    return {procesos, terminados, timeline, T_total_sistema};
+}
+
+/* Renderizado: tabla y gantt */
+function renderResults(sim) {
+    const {procesos, terminados, timeline, T_total_sistema} = sim;
+
+    // Actualizar información de CPU
+    const cpuInfo = document.getElementById('cpuInfo');
+    if (terminados.length === 0) {
+        cpuInfo.textContent = 'No se completó la simulación.';
+        return;
+    }
+    
+    // Calcular métricas generales
+    const tiempoOcioso = timeline.filter(t => t === null).length;
+    const eficiencia = ((T_total_sistema - tiempoOcioso) / T_total_sistema * 100).toFixed(1);
+    
+    cpuInfo.innerHTML = `
+        <span style="color: var(--accent);">Tiempo total del sistema:</span> ${T_total_sistema} unidades | 
+        <span style="color: var(--accent);">Eficiencia CPU:</span> ${eficiencia}% | 
+        <span style="color: var(--accent);">Procesos completados:</span> ${terminados.length}
+    `;
+
+    // Tabla resultados
+    let html = `<table><thead><tr>
+        <th>Proceso</th><th>t</th><th>Espera</th><th>Bloqueo</th><th>if</th><th>T</th><th>T-t</th><th>P</th><th>TR</th>
+    </tr></thead><tbody>`;
+
+    for (const p of terminados) {
+        const T = p.if - p.li;
+        const perdido = T - p.t_original;
+        const P = (T / p.t_original).toFixed(2);
+        html += `<tr>
+            <td><strong>${p.name}</strong></td>
+            <td>${p.t_original}</td>
+            <td>${p.t_espera}</td>
+            <td>${p.t_bloqueo}</td>
+            <td>${p.if}</td>
+            <td>${T}</td>
+            <td>${perdido}</td>
+            <td>${P}</td>
+            <td>${p.tr}</td>
+        </tr>`;
+    }
+    html += `</tbody></table>`;
+    document.getElementById('tablaResultados').innerHTML = html;
+
+    // Gantt: construimos estado por proceso por unidad de tiempo
+    const procNames = procesos.map(p => p.name);
+    const states = procNames.map(() => Array(T_total_sistema).fill('empty'));
+
+    // Para reconstruir bloqueos y ejecuciones
+    const aux = {};
+    for (const p of procesos) aux[p.name] = {
+        executedSinceLastBlock: 0, 
+        hasBlocked: false, 
+        remainingBlock: 0
+    };
+
+    for (let t = 0; t < T_total_sistema; t++) {
+        const current = timeline[t] || null;
+        
+        // Marcar ejecución
+        if (current) {
+            const idx = procNames.indexOf(current);
+            if (idx >= 0) {
+                states[idx][t] = 'executing';
+                aux[current].executedSinceLastBlock++;
+                
+                // Si debe bloquearse ahora
+                const p = procesos.find(x => x.name === current);
+                if (!aux[current].hasBlocked && p.bi > 0 && aux[current].executedSinceLastBlock >= p.bi) {
+                    aux[current].hasBlocked = true;
+                    aux[current].remainingBlock = p.bd;
+                    aux[current].executedSinceLastBlock = 0;
+                }
+            }
+        }
+        
+        // Aplicar bloqueos pendientes para cada proceso
+        for (const name of procNames) {
+            const a = aux[name];
+            if (a.remainingBlock > 0) {
+                const idx = procNames.indexOf(name);
+                if (states[idx][t] !== 'executing') {
+                    states[idx][t] = 'blocked';
+                    a.remainingBlock = Math.max(0, a.remainingBlock - 1);
+                }
+            }
+        }
+    }
+
+    // Marcar 'ready' (llegó pero no ejecutó y no estaba bloqueado)
+    for (let pi = 0; pi < procNames.length; pi++) {
+        const p = procesos[pi];
+        for (let t = 0; t < T_total_sistema; t++) {
+            if (t >= p.li && states[pi][t] === 'empty') {
+                states[pi][t] = 'ready';
+            }
+        }
+    }
+
+    // Render escala de tiempo
+    const timeScaleEl = document.getElementById('timeScale');
+    timeScaleEl.innerHTML = '';
+    for (let i = 0; i < T_total_sistema; i++) {
+        const div = document.createElement('div');
+        div.className = 'time-tick';
+        div.textContent = i;
+        timeScaleEl.appendChild(div);
+    }
+
+    // Render filas (de abajo hacia arriba)
+    const grid = document.getElementById('diagramaGantt');
+    grid.innerHTML = '';
+    
+    // Invertir el orden para mostrar de abajo hacia arriba
+    const reversedProcNames = [...procNames].reverse();
+    const reversedStates = [...states].reverse();
+    
+    for (let pi = 0; pi < reversedProcNames.length; pi++) {
+        const row = document.createElement('div');
+        row.className = 'timeline-row';
+        
+        const label = document.createElement('div');
+        label.className = 'process-label';
+        label.textContent = reversedProcNames[pi];
+        row.appendChild(label);
+
+        const track = document.createElement('div');
+        track.className = 'time-track';
+
+        for (let t = 0; t < T_total_sistema; t++) {
+            const s = reversedStates[pi][t];
+            const block = document.createElement('div');
+            block.className = 'block ' + s;
+            block.title = `${reversedProcNames[pi]} @ t=${t}: ${
+                s === 'executing' ? 'Ejecutando' : 
+                s === 'blocked' ? 'Bloqueado' : 
+                s === 'ready' ? 'En cola' : 'Inactivo'
+            }`;
+            block.textContent = s === 'executing' ? reversedProcNames[pi] : 
+                               (s === 'blocked' ? 'B' : 
+                               (s === 'ready' ? '·' : ''));
+            track.appendChild(block);
+        }
+
+        row.appendChild(track);
+        grid.appendChild(row);
+    }
+}
+
+/* Botón ejecutar */
+document.getElementById('runSim').addEventListener('click', (e) => {
+    e.preventDefault();
+    const sim = runSimulation();
+    renderResults(sim);
+});
+
+/* Ejecutar al cargar inicialmente */
+window.addEventListener('load', () => {
+    const sim = runSimulation();
+    renderResults(sim);
+});
+</script>
+</body>
+</html>

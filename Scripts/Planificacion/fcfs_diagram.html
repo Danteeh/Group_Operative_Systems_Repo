@@ -1,0 +1,401 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCFS con Bloqueos - Diagrama de Gantt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 15px;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin: 25px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        .results-table th {
+            background-color: #3498db;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .results-table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .results-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .results-table tr:hover {
+            background-color: #e8f4fc;
+        }
+        
+        .timeline-container {
+            margin: 30px 0;
+            overflow-x: auto;
+        }
+        
+        .timeline-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 1080px;
+        }
+        
+        .timeline-row {
+            display: flex;
+            align-items: center;
+            height: 40px;
+        }
+        
+        .process-label {
+            width: 50px;
+            font-weight: bold;
+            text-align: center;
+            color: #2c3e50;
+        }
+        
+        .time-scale {
+            display: flex;
+            margin-left: 50px;
+            border-top: 2px solid #7f8c8d;
+            position: relative;
+            height: 30px;
+        }
+        
+        .time-tick {
+            flex: 1;
+            border-left: 1px solid #bdc3c7;
+            text-align: center;
+            padding-top: 5px;
+            font-size: 12px;
+            color: #7f8c8d;
+            min-width: 30px;
+            position: relative;
+        }
+        
+        .time-tick:first-child {
+            border-left: none;
+        }
+        
+        .timeline-block {
+            flex: 1;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s;
+            min-width: 30px;
+            border-radius: 3px;
+            margin: 1px;
+        }
+        
+        .timeline-block:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+        
+        .executing {
+            background-color: #2ecc71;
+        }
+        
+        .blocked {
+            background-color: #e74c3c;
+        }
+        
+        .ready {
+            background-color: #f39c12;
+        }
+        
+        .empty {
+            background-color: #ecf0f1;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        
+        .summary {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .summary p {
+            margin: 5px 0;
+        }
+        
+        .sequence {
+            font-family: monospace;
+            font-size: 18px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            letter-spacing: 2px;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .timeline-block {
+                min-width: 20px;
+                font-size: 12px;
+            }
+            
+            .time-tick {
+                min-width: 20px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FCFS con Control de Bloqueos</h1>
+        
+        <div class="summary">
+            <p><strong>Tiempo total del sistema:</strong> 36 unidades</p>
+            <p><strong>Secuencia de ejecución:</strong></p>
+            <div class="sequence">AAABCCCCCAAABBBBBBBCCDDDEEFFEEEEEEE</div>
+        </div>
+        
+        <h2>Tabla de Resultados</h2>
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Proceso</th>
+                    <th>t</th>
+                    <th>Espera</th>
+                    <th>Bloqueo</th>
+                    <th>if</th>
+                    <th>T</th>
+                    <th>T-t</th>
+                    <th>P</th>
+                    <th>TR</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                    <tr>
+                        <td><strong>A</strong></td>
+                        <td>6</td>
+                        <td>5</td>
+                        <td>2</td>
+                        <td>12</td>
+                        <td>12</td>
+                        <td>6</td>
+                        <td>2.00</td>
+                        <td>0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>B</strong></td>
+                        <td>8</td>
+                        <td>8</td>
+                        <td>3</td>
+                        <td>19</td>
+                        <td>18</td>
+                        <td>10</td>
+                        <td>2.25</td>
+                        <td>2</td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>C</strong></td>
+                        <td>7</td>
+                        <td>12</td>
+                        <td>1</td>
+                        <td>21</td>
+                        <td>19</td>
+                        <td>12</td>
+                        <td>2.71</td>
+                        <td>2</td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>D</strong></td>
+                        <td>3</td>
+                        <td>17</td>
+                        <td>0</td>
+                        <td>24</td>
+                        <td>20</td>
+                        <td>17</td>
+                        <td>6.67</td>
+                        <td>17</td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>E</strong></td>
+                        <td>9</td>
+                        <td>18</td>
+                        <td>4</td>
+                        <td>36</td>
+                        <td>30</td>
+                        <td>21</td>
+                        <td>3.33</td>
+                        <td>18</td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>F</strong></td>
+                        <td>2</td>
+                        <td>20</td>
+                        <td>0</td>
+                        <td>28</td>
+                        <td>22</td>
+                        <td>20</td>
+                        <td>11.00</td>
+                        <td>20</td>
+                    </tr>
+                    
+            </tbody>
+        </table>
+        
+        <h2>Diagrama de Gantt</h2>
+        <div class="timeline-container">
+            <!-- Escala de tiempo -->
+            <div class="time-scale">
+                <div class="time-tick">0</div><div class="time-tick">1</div><div class="time-tick">2</div><div class="time-tick">3</div><div class="time-tick">4</div><div class="time-tick">5</div><div class="time-tick">6</div><div class="time-tick">7</div><div class="time-tick">8</div><div class="time-tick">9</div><div class="time-tick">10</div><div class="time-tick">11</div><div class="time-tick">12</div><div class="time-tick">13</div><div class="time-tick">14</div><div class="time-tick">15</div><div class="time-tick">16</div><div class="time-tick">17</div><div class="time-tick">18</div><div class="time-tick">19</div><div class="time-tick">20</div><div class="time-tick">21</div><div class="time-tick">22</div><div class="time-tick">23</div><div class="time-tick">24</div><div class="time-tick">25</div><div class="time-tick">26</div><div class="time-tick">27</div><div class="time-tick">28</div><div class="time-tick">29</div><div class="time-tick">30</div><div class="time-tick">31</div><div class="time-tick">32</div><div class="time-tick">33</div><div class="time-tick">34</div><div class="time-tick">35</div>
+            </div>
+            
+            <!-- Líneas de tiempo por proceso -->
+            <div class="timeline-grid">
+                
+                    <div class="timeline-row">
+                        <div class="process-label">A</div>
+                        <div class="timeline-block executing" title="A en t=0: Ejecutando"></div><div class="timeline-block executing" title="A en t=1: Ejecutando"></div><div class="timeline-block executing" title="A en t=2: Ejecutando"></div><div class="timeline-block blocked" title="A en t=3: Bloqueado"></div><div class="timeline-block blocked" title="A en t=4: Bloqueado"></div><div class="timeline-block ready" title="A en t=5: En cola"></div><div class="timeline-block ready" title="A en t=6: En cola"></div><div class="timeline-block ready" title="A en t=7: En cola"></div><div class="timeline-block ready" title="A en t=8: En cola"></div><div class="timeline-block executing" title="A en t=9: Ejecutando"></div><div class="timeline-block executing" title="A en t=10: Ejecutando"></div><div class="timeline-block executing" title="A en t=11: Ejecutando"></div><div class="timeline-block empty" title="A en t=12: No activo"></div><div class="timeline-block empty" title="A en t=13: No activo"></div><div class="timeline-block empty" title="A en t=14: No activo"></div><div class="timeline-block empty" title="A en t=15: No activo"></div><div class="timeline-block empty" title="A en t=16: No activo"></div><div class="timeline-block empty" title="A en t=17: No activo"></div><div class="timeline-block empty" title="A en t=18: No activo"></div><div class="timeline-block empty" title="A en t=19: No activo"></div><div class="timeline-block empty" title="A en t=20: No activo"></div><div class="timeline-block empty" title="A en t=21: No activo"></div><div class="timeline-block empty" title="A en t=22: No activo"></div><div class="timeline-block empty" title="A en t=23: No activo"></div><div class="timeline-block empty" title="A en t=24: No activo"></div><div class="timeline-block empty" title="A en t=25: No activo"></div><div class="timeline-block empty" title="A en t=26: No activo"></div><div class="timeline-block empty" title="A en t=27: No activo"></div><div class="timeline-block empty" title="A en t=28: No activo"></div><div class="timeline-block empty" title="A en t=29: No activo"></div><div class="timeline-block empty" title="A en t=30: No activo"></div><div class="timeline-block empty" title="A en t=31: No activo"></div><div class="timeline-block empty" title="A en t=32: No activo"></div><div class="timeline-block empty" title="A en t=33: No activo"></div><div class="timeline-block empty" title="A en t=34: No activo"></div><div class="timeline-block empty" title="A en t=35: No activo"></div>
+                    </div>
+                    
+                    <div class="timeline-row">
+                        <div class="process-label">B</div>
+                        <div class="timeline-block empty" title="B en t=0: No activo"></div><div class="timeline-block ready" title="B en t=1: En cola"></div><div class="timeline-block ready" title="B en t=2: En cola"></div><div class="timeline-block executing" title="B en t=3: Ejecutando"></div><div class="timeline-block blocked" title="B en t=4: Bloqueado"></div><div class="timeline-block blocked" title="B en t=5: Bloqueado"></div><div class="timeline-block blocked" title="B en t=6: Bloqueado"></div><div class="timeline-block ready" title="B en t=7: En cola"></div><div class="timeline-block ready" title="B en t=8: En cola"></div><div class="timeline-block ready" title="B en t=9: En cola"></div><div class="timeline-block ready" title="B en t=10: En cola"></div><div class="timeline-block ready" title="B en t=11: En cola"></div><div class="timeline-block executing" title="B en t=12: Ejecutando"></div><div class="timeline-block executing" title="B en t=13: Ejecutando"></div><div class="timeline-block executing" title="B en t=14: Ejecutando"></div><div class="timeline-block executing" title="B en t=15: Ejecutando"></div><div class="timeline-block executing" title="B en t=16: Ejecutando"></div><div class="timeline-block executing" title="B en t=17: Ejecutando"></div><div class="timeline-block executing" title="B en t=18: Ejecutando"></div><div class="timeline-block empty" title="B en t=19: No activo"></div><div class="timeline-block empty" title="B en t=20: No activo"></div><div class="timeline-block empty" title="B en t=21: No activo"></div><div class="timeline-block empty" title="B en t=22: No activo"></div><div class="timeline-block empty" title="B en t=23: No activo"></div><div class="timeline-block empty" title="B en t=24: No activo"></div><div class="timeline-block empty" title="B en t=25: No activo"></div><div class="timeline-block empty" title="B en t=26: No activo"></div><div class="timeline-block empty" title="B en t=27: No activo"></div><div class="timeline-block empty" title="B en t=28: No activo"></div><div class="timeline-block empty" title="B en t=29: No activo"></div><div class="timeline-block empty" title="B en t=30: No activo"></div><div class="timeline-block empty" title="B en t=31: No activo"></div><div class="timeline-block empty" title="B en t=32: No activo"></div><div class="timeline-block empty" title="B en t=33: No activo"></div><div class="timeline-block empty" title="B en t=34: No activo"></div><div class="timeline-block empty" title="B en t=35: No activo"></div>
+                    </div>
+                    
+                    <div class="timeline-row">
+                        <div class="process-label">C</div>
+                        <div class="timeline-block empty" title="C en t=0: No activo"></div><div class="timeline-block empty" title="C en t=1: No activo"></div><div class="timeline-block ready" title="C en t=2: En cola"></div><div class="timeline-block ready" title="C en t=3: En cola"></div><div class="timeline-block executing" title="C en t=4: Ejecutando"></div><div class="timeline-block executing" title="C en t=5: Ejecutando"></div><div class="timeline-block executing" title="C en t=6: Ejecutando"></div><div class="timeline-block executing" title="C en t=7: Ejecutando"></div><div class="timeline-block executing" title="C en t=8: Ejecutando"></div><div class="timeline-block blocked" title="C en t=9: Bloqueado"></div><div class="timeline-block ready" title="C en t=10: En cola"></div><div class="timeline-block ready" title="C en t=11: En cola"></div><div class="timeline-block ready" title="C en t=12: En cola"></div><div class="timeline-block ready" title="C en t=13: En cola"></div><div class="timeline-block ready" title="C en t=14: En cola"></div><div class="timeline-block ready" title="C en t=15: En cola"></div><div class="timeline-block ready" title="C en t=16: En cola"></div><div class="timeline-block ready" title="C en t=17: En cola"></div><div class="timeline-block ready" title="C en t=18: En cola"></div><div class="timeline-block executing" title="C en t=19: Ejecutando"></div><div class="timeline-block executing" title="C en t=20: Ejecutando"></div><div class="timeline-block empty" title="C en t=21: No activo"></div><div class="timeline-block empty" title="C en t=22: No activo"></div><div class="timeline-block empty" title="C en t=23: No activo"></div><div class="timeline-block empty" title="C en t=24: No activo"></div><div class="timeline-block empty" title="C en t=25: No activo"></div><div class="timeline-block empty" title="C en t=26: No activo"></div><div class="timeline-block empty" title="C en t=27: No activo"></div><div class="timeline-block empty" title="C en t=28: No activo"></div><div class="timeline-block empty" title="C en t=29: No activo"></div><div class="timeline-block empty" title="C en t=30: No activo"></div><div class="timeline-block empty" title="C en t=31: No activo"></div><div class="timeline-block empty" title="C en t=32: No activo"></div><div class="timeline-block empty" title="C en t=33: No activo"></div><div class="timeline-block empty" title="C en t=34: No activo"></div><div class="timeline-block empty" title="C en t=35: No activo"></div>
+                    </div>
+                    
+                    <div class="timeline-row">
+                        <div class="process-label">D</div>
+                        <div class="timeline-block empty" title="D en t=0: No activo"></div><div class="timeline-block empty" title="D en t=1: No activo"></div><div class="timeline-block empty" title="D en t=2: No activo"></div><div class="timeline-block empty" title="D en t=3: No activo"></div><div class="timeline-block ready" title="D en t=4: En cola"></div><div class="timeline-block ready" title="D en t=5: En cola"></div><div class="timeline-block ready" title="D en t=6: En cola"></div><div class="timeline-block ready" title="D en t=7: En cola"></div><div class="timeline-block ready" title="D en t=8: En cola"></div><div class="timeline-block ready" title="D en t=9: En cola"></div><div class="timeline-block ready" title="D en t=10: En cola"></div><div class="timeline-block ready" title="D en t=11: En cola"></div><div class="timeline-block ready" title="D en t=12: En cola"></div><div class="timeline-block ready" title="D en t=13: En cola"></div><div class="timeline-block ready" title="D en t=14: En cola"></div><div class="timeline-block ready" title="D en t=15: En cola"></div><div class="timeline-block ready" title="D en t=16: En cola"></div><div class="timeline-block ready" title="D en t=17: En cola"></div><div class="timeline-block ready" title="D en t=18: En cola"></div><div class="timeline-block ready" title="D en t=19: En cola"></div><div class="timeline-block ready" title="D en t=20: En cola"></div><div class="timeline-block executing" title="D en t=21: Ejecutando"></div><div class="timeline-block executing" title="D en t=22: Ejecutando"></div><div class="timeline-block executing" title="D en t=23: Ejecutando"></div><div class="timeline-block empty" title="D en t=24: No activo"></div><div class="timeline-block empty" title="D en t=25: No activo"></div><div class="timeline-block empty" title="D en t=26: No activo"></div><div class="timeline-block empty" title="D en t=27: No activo"></div><div class="timeline-block empty" title="D en t=28: No activo"></div><div class="timeline-block empty" title="D en t=29: No activo"></div><div class="timeline-block empty" title="D en t=30: No activo"></div><div class="timeline-block empty" title="D en t=31: No activo"></div><div class="timeline-block empty" title="D en t=32: No activo"></div><div class="timeline-block empty" title="D en t=33: No activo"></div><div class="timeline-block empty" title="D en t=34: No activo"></div><div class="timeline-block empty" title="D en t=35: No activo"></div>
+                    </div>
+                    
+                    <div class="timeline-row">
+                        <div class="process-label">E</div>
+                        <div class="timeline-block empty" title="E en t=0: No activo"></div><div class="timeline-block empty" title="E en t=1: No activo"></div><div class="timeline-block empty" title="E en t=2: No activo"></div><div class="timeline-block empty" title="E en t=3: No activo"></div><div class="timeline-block empty" title="E en t=4: No activo"></div><div class="timeline-block empty" title="E en t=5: No activo"></div><div class="timeline-block ready" title="E en t=6: En cola"></div><div class="timeline-block ready" title="E en t=7: En cola"></div><div class="timeline-block ready" title="E en t=8: En cola"></div><div class="timeline-block ready" title="E en t=9: En cola"></div><div class="timeline-block ready" title="E en t=10: En cola"></div><div class="timeline-block ready" title="E en t=11: En cola"></div><div class="timeline-block ready" title="E en t=12: En cola"></div><div class="timeline-block ready" title="E en t=13: En cola"></div><div class="timeline-block ready" title="E en t=14: En cola"></div><div class="timeline-block ready" title="E en t=15: En cola"></div><div class="timeline-block ready" title="E en t=16: En cola"></div><div class="timeline-block ready" title="E en t=17: En cola"></div><div class="timeline-block ready" title="E en t=18: En cola"></div><div class="timeline-block ready" title="E en t=19: En cola"></div><div class="timeline-block ready" title="E en t=20: En cola"></div><div class="timeline-block ready" title="E en t=21: En cola"></div><div class="timeline-block ready" title="E en t=22: En cola"></div><div class="timeline-block ready" title="E en t=23: En cola"></div><div class="timeline-block executing" title="E en t=24: Ejecutando"></div><div class="timeline-block executing" title="E en t=25: Ejecutando"></div><div class="timeline-block blocked" title="E en t=26: Bloqueado"></div><div class="timeline-block blocked" title="E en t=27: Bloqueado"></div><div class="timeline-block executing" title="E en t=28: Ejecutando"></div><div class="timeline-block executing" title="E en t=29: Ejecutando"></div><div class="timeline-block executing" title="E en t=30: Ejecutando"></div><div class="timeline-block executing" title="E en t=31: Ejecutando"></div><div class="timeline-block executing" title="E en t=32: Ejecutando"></div><div class="timeline-block executing" title="E en t=33: Ejecutando"></div><div class="timeline-block executing" title="E en t=34: Ejecutando"></div><div class="timeline-block blocked" title="E en t=35: Bloqueado"></div>
+                    </div>
+                    
+                    <div class="timeline-row">
+                        <div class="process-label">F</div>
+                        <div class="timeline-block empty" title="F en t=0: No activo"></div><div class="timeline-block empty" title="F en t=1: No activo"></div><div class="timeline-block empty" title="F en t=2: No activo"></div><div class="timeline-block empty" title="F en t=3: No activo"></div><div class="timeline-block empty" title="F en t=4: No activo"></div><div class="timeline-block empty" title="F en t=5: No activo"></div><div class="timeline-block ready" title="F en t=6: En cola"></div><div class="timeline-block ready" title="F en t=7: En cola"></div><div class="timeline-block ready" title="F en t=8: En cola"></div><div class="timeline-block ready" title="F en t=9: En cola"></div><div class="timeline-block ready" title="F en t=10: En cola"></div><div class="timeline-block ready" title="F en t=11: En cola"></div><div class="timeline-block ready" title="F en t=12: En cola"></div><div class="timeline-block ready" title="F en t=13: En cola"></div><div class="timeline-block ready" title="F en t=14: En cola"></div><div class="timeline-block ready" title="F en t=15: En cola"></div><div class="timeline-block ready" title="F en t=16: En cola"></div><div class="timeline-block ready" title="F en t=17: En cola"></div><div class="timeline-block ready" title="F en t=18: En cola"></div><div class="timeline-block ready" title="F en t=19: En cola"></div><div class="timeline-block ready" title="F en t=20: En cola"></div><div class="timeline-block ready" title="F en t=21: En cola"></div><div class="timeline-block ready" title="F en t=22: En cola"></div><div class="timeline-block ready" title="F en t=23: En cola"></div><div class="timeline-block ready" title="F en t=24: En cola"></div><div class="timeline-block ready" title="F en t=25: En cola"></div><div class="timeline-block executing" title="F en t=26: Ejecutando"></div><div class="timeline-block executing" title="F en t=27: Ejecutando"></div><div class="timeline-block empty" title="F en t=28: No activo"></div><div class="timeline-block empty" title="F en t=29: No activo"></div><div class="timeline-block empty" title="F en t=30: No activo"></div><div class="timeline-block empty" title="F en t=31: No activo"></div><div class="timeline-block empty" title="F en t=32: No activo"></div><div class="timeline-block empty" title="F en t=33: No activo"></div><div class="timeline-block empty" title="F en t=34: No activo"></div><div class="timeline-block empty" title="F en t=35: No activo"></div>
+                    </div>
+                    
+            </div>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color executing"></div>
+                <span>Ejecutando</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color blocked"></div>
+                <span>Bloqueado</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color ready"></div>
+                <span>En cola de listos</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color empty"></div>
+                <span>No activo/inactivo</span>
+            </div>
+        </div>
+        
+        <div class="summary">
+            <h3>Explicación:</h3>
+            <p>• <strong>FCFS (First Come First Served)</strong>: Los procesos se ejecutan en orden de llegada.</p>
+            <p>• <strong>Bloqueos</strong>: Cada proceso se bloquea solo una vez según su bi (burst de ejecución antes de bloqueo).</p>
+            <p>• <strong>Colores</strong>: Verde = ejecución, Rojo = bloqueo, Naranja = en cola de listos, Gris = inactivo.</p>
+        </div>
+    </div>
+    
+    <script>
+        // Añadir interactividad a los bloques de la línea de tiempo
+        document.querySelectorAll('.timeline-block').forEach(block => {
+            block.addEventListener('click', function() {
+                alert(this.getAttribute('title'));
+            });
+        });
+    </script>
+</body>
+</html>
