@@ -584,6 +584,29 @@ function runSimulation() {
             }
         }
 
+        // RE-ORDENAR DESPUÉS DE DESBLOQUEOS
+        listos.sort((a, b) => {
+            if (a.t !== b.t) return a.t - b.t;
+            return a.li - b.li;
+        });
+
+        // VERIFICACIÓN DE EXPROPIACIÓN (SRTF)
+        if (proceso_actual && listos.length > 0) {
+            // Si el mejor de la cola tiene MENOS tiempo restante que el actual
+            if (listos[0].t < proceso_actual.t) {
+                // Expropiar
+                proceso_actual.estado = 'listo';
+                listos.push(proceso_actual);
+                proceso_actual = null;
+                
+                // Re-ordenar nuevamente
+                listos.sort((a, b) => {
+                    if (a.t !== b.t) return a.t - b.t;
+                    return a.li - b.li;
+                });
+            }
+        }
+
         // 5. Tomar proceso - IDÉNTICO
         if (!proceso_actual && listos.length > 0) {
             proceso_actual = listos.shift();
