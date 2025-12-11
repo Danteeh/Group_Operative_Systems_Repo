@@ -323,35 +323,40 @@
         font-size:1rem;
     }
     
-    /* Selector de algoritmo */
-    .algorithm-selector{
-        display:flex;
-        justify-content:center;
-        gap:15px;
-        margin:20px 0;
-        flex-wrap:wrap;
+    /* Log de depuración */
+    .debug-container {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f3f7f8;
+        border-radius: 8px;
+        border: 1px solid var(--muted);
+        max-height: 300px;
+        overflow-y: auto;
+        font-size: 12px;
+        font-family: monospace;
     }
     
-    .algo-btn{
-        padding:10px 20px;
-        border-radius:6px;
-        background:#f3f7f8;
-        border:2px solid transparent;
-        cursor:pointer;
-        font-weight:600;
-        transition:all 0.3s;
-        color:var(--text);
+    .debug-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--muted);
     }
     
-    .algo-btn:hover{
-        background:#e8f4fc;
-        border-color:var(--accent);
+    .debug-log {
+        line-height: 1.4;
     }
     
-    .algo-btn.active{
-        background:var(--accent);
-        color:white;
-        border-color:var(--accent);
+    .log-entry {
+        margin-bottom: 2px;
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    
+    .log-entry:hover {
+        background: rgba(0, 106, 137, 0.1);
     }
 </style>
 </head>
@@ -359,20 +364,14 @@
   <div class="container">
     <h1>SJF (Shortest Job First) con Bloqueos</h1>
     
-    <div class="algorithm-selector">
-        <button class="algo-btn active" id="algoSJF">SJF (Ordenado por t original)</button>
-        <button class="algo-btn" id="algoFCFS">FCFS (Primero en Llegar)</button>
-    </div>
-    
     <p class="info-text">
       <strong>SJF (Shortest Job First)</strong>: Se ejecuta primero el proceso con menor tiempo de ejecución TOTAL (t).<br>
-      Cuando un proceso sale del bloqueo, se reordena según su t original. Cada proceso se bloquea solo una vez.
+      Cuando un proceso se bloquea y luego sale, se reinserta en la cola según su t original.
     </p>
 
     <section>
       <h2>Entradas de Procesos</h2>
       
-      <!-- Cabecera del formulario con etiquetas descriptivas -->
       <div class="form-header">
         <div title="Nombre del proceso">Proceso</div>
         <div title="Tiempo de llegada (li)">Llegada</div>
@@ -391,6 +390,7 @@
         <button class="ghost" id="removeRow">Quitar último</button>
         <button id="runSim">Ejecutar simulación</button>
         <button class="ghost" id="resetDefaults">Valores por defecto</button>
+        <button class="ghost" id="toggleDebug">Mostrar log</button>
       </div>
     </section>
 
@@ -412,18 +412,25 @@
           <div class="legend-item"><div class="legend-color empty"></div><div>No activo</div></div>
         </div>
       </div>
+      
+      <div id="debugInfo" style="display: none;">
+        <h3>Log de Simulación</h3>
+        <div class="debug-container">
+          <div class="debug-header">
+            <strong>Eventos detallados de la ejecución</strong>
+          </div>
+          <div id="debugContent" class="debug-log"></div>
+        </div>
+      </div>
     </section>
 
     <footer>
       <p><strong>SJF (Shortest Job First) con Bloqueos</strong> - Ordenado por tiempo de ejecución original (t)</p>
-      <p>Características: No expulsivo • Minimiza tiempo promedio • Procesos se bloquean solo una vez</p>
+      <p>Características: No expulsivo • Minimiza tiempo promedio • Cada proceso puede bloquearse una vez</p>
     </footer>
   </div>
 
 <script>
-/* Variables globales */
-let currentAlgorithm = 'SJF'; // 'SJF' o 'FCFS'
-
 /* Utilities: crear fila de proceso en el formulario */
 function createProcessRow({name='P', li=0, t=1, bi=0, bd=0} = {}) {
     const wrapper = document.createElement('div');
@@ -515,74 +522,45 @@ document.getElementById('resetDefaults').addEventListener('click',(e)=>{
     }
 });
 
-/* Selector de algoritmo */
-document.getElementById('algoSJF').addEventListener('click', (e) => {
+document.getElementById('toggleDebug').addEventListener('click', (e) => {
     e.preventDefault();
-    currentAlgorithm = 'SJF';
-    document.getElementById('algoSJF').classList.add('active');
-    document.getElementById('algoFCFS').classList.remove('active');
-    document.querySelector('.info-text').innerHTML = `
-        <strong>SJF (Shortest Job First)</strong>: Se ejecuta primero el proceso con menor tiempo de ejecución TOTAL (t).<br>
-        Cuando un proceso sale del bloqueo, se reordena según su t original. Cada proceso se bloquea solo una vez.
-    `;
-    document.querySelector('h1').textContent = 'SJF (Shortest Job First) con Bloqueos';
+    const debugInfo = document.getElementById('debugInfo');
+    debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
 });
 
-document.getElementById('algoFCFS').addEventListener('click', (e) => {
-    e.preventDefault();
-    currentAlgorithm = 'FCFS';
-    document.getElementById('algoFCFS').classList.add('active');
-    document.getElementById('algoSJF').classList.remove('active');
-    document.querySelector('.info-text').innerHTML = `
-        <strong>FCFS (First Come First Served)</strong>: Se ejecuta primero el proceso que llegó antes.<br>
-        Algoritmo simple pero puede tener alto tiempo de espera promedio.
-    `;
-    document.querySelector('h1').textContent = 'FCFS (First Come First Served) con Bloqueos';
-});
-
-/* Clase interna para simular SJF/FCFS con bloqueos */
+/* Clase interna para simular SJF con bloqueos */
 class Proc {
     constructor(name, li, t, bi, bd) {
         this.name = String(name);
-        this.li = Number(li);
-        this.t_original = Number(t);
-        this.t = Number(t); // Tiempo restante
-        this.bi = Number(bi);
-        this.bd = Number(bd);
-
-        this.estado = 'nuevo';
-        this.tiempo_bloqueo_restante = 0;
-        this.contador_ejecucion = 0;
-
-        this.tr = null;
-        this.if = null;
-        this.t_espera = 0;
-        this.t_bloqueo = 0;
-        this.t_ejecucion = 0;
-        this.ya_se_bloqueo = false;
+        this.li = Number(li);              // Tiempo de llegada
+        this.t_original = Number(t);       // Tiempo total requerido
+        this.t_restante = Number(t);       // Tiempo restante de ejecución
+        this.bi = Number(bi);              // Cada cuánto se bloquea
+        this.bd = Number(bd);              // Duración del bloqueo
+        
+        this.estado = 'nuevo';             // 'nuevo', 'listo', 'ejecutando', 'bloqueado', 'terminado'
+        this.tiempo_bloqueo_restante = 0;  // Tiempo restante de bloqueo
+        this.ejecutado_desde_bloqueo = 0;  // Cuánto ha ejecutado desde el último bloqueo
+        this.ha_sido_bloqueado = false;    // Si ya se bloqueó una vez
+        
+        // Métricas
+        this.tr = null;                    // Tiempo de primera respuesta (Response Time)
+        this.if = null;                    // Instante de finalización
+        this.t_espera = 0;                 // Tiempo en cola de listos
+        this.t_bloqueo = 0;                // Tiempo en bloqueado
+        this.t_ejecucion = 0;              // Tiempo total ejecutando
+    }
+    
+    // Ordenar por t_original (tiempo total), luego por llegada
+    static compararSJF(a, b) {
+        if (a.t_original !== b.t_original) {
+            return a.t_original - b.t_original;
+        }
+        return a.li - b.li;
     }
 }
 
-/* Función para ordenar procesos según algoritmo seleccionado */
-function ordenarProcesos(listos, algoritmo) {
-    switch(algoritmo) {
-        case 'SJF':
-            // SJF: Ordenar por t_original (tiempo total), luego por llegada
-            return listos.sort((a, b) => {
-                if (a.t_original !== b.t_original) return a.t_original - b.t_original;
-                return a.li - b.li;
-            });
-            
-        case 'FCFS':
-            // FCFS: Solo por tiempo de llegada
-            return listos.sort((a, b) => a.li - b.li);
-            
-        default:
-            return listos;
-    }
-}
-
-/* Ejecutar simulación con datos del formulario */
+/* Función principal de simulación SJF */
 function runSimulation() {
     // Leer procesos del formulario
     const rows = Array.from(formContainer.querySelectorAll('.form-row'));
@@ -597,121 +575,146 @@ function runSimulation() {
         );
     });
 
-    // Reset containers
-    let listos = [];
-    let bloqueados = [];
-    let terminados = [];
-    let tiempo = 0;
-    let proceso_actual = null;
-    let timeline = [];
-    let debugLog = [];
+    // Variables de simulación
+    let listos = [];           // Procesos listos para ejecutar
+    let bloqueados = [];       // Procesos bloqueados
+    let terminados = [];       // Procesos terminados
+    let tiempo = 0;            // Reloj del sistema
+    let proceso_actual = null; // Proceso ejecutando actualmente
+    let timeline = [];         // Timeline para Gantt
+    let debugLog = [];         // Log de eventos para depuración
 
-    // Por seguridad evitar loops infinitos
-    const safeLimit = procesos.reduce((s,p) => s + p.t_original + p.bd, 0) * 5 + 2000;
+    // Límite de seguridad
+    const safeLimit = procesos.reduce((sum, p) => sum + p.t_original + p.bd, 0) * 3 + 100;
 
+    // Función auxiliar para registrar eventos
+    function logEvent(msg) {
+        debugLog.push(`T=${tiempo}: ${msg}`);
+    }
+
+    // Inicializar log
+    logEvent("=== INICIO SIMULACIÓN SJF ===");
+    for (let p of procesos) {
+        logEvent(`${p.name}: llegada=${p.li}, t=${p.t_original}, bloqueo-cada=${p.bi}, duracion=${p.bd}`);
+    }
+
+    // Bucle principal de simulación
     while (terminados.length < procesos.length && tiempo < safeLimit) {
-        // Llegadas
+        logEvent(`--- Ciclo ${tiempo} ---`);
+        
+        // 1. Llegadas de nuevos procesos
         for (let p of procesos) {
             if (p.estado === 'nuevo' && tiempo >= p.li) {
                 p.estado = 'listo';
                 listos.push(p);
-                debugLog.push(`T=${tiempo}: ${p.name} llega`);
+                logEvent(`${p.name} llega al sistema`);
             }
         }
 
-        // Ordenar según algoritmo seleccionado
-        listos = ordenarProcesos(listos, currentAlgorithm);
-        
-        // Registrar estado de la cola
-        if (listos.length > 0) {
-            debugLog.push(`T=${tiempo}: Listos ordenados: ${listos.map(p => `${p.name}(${currentAlgorithm === 'SJF' ? p.t_original : p.li})`).join(', ')}`);
-        }
-
-        // Actualizar bloqueados
-        for (let p of bloqueados) {
-            p.tiempo_bloqueo_restante = Math.max(0, p.tiempo_bloqueo_restante - 1);
-            p.t_bloqueo++;
-        }
-        
-        // Mover quienes salen de bloqueo
+        // 2. Actualizar procesos bloqueados
         for (let i = bloqueados.length - 1; i >= 0; i--) {
             const p = bloqueados[i];
-            if (p.tiempo_bloqueo_restante === 0) {
-                p.estado = 'listo';
-                p.ya_se_bloqueo = true;
-                p.contador_ejecucion = 0; // Reiniciar contador después de bloqueo
-                listos.push(p);
-                debugLog.push(`T=${tiempo}: ${p.name} sale de bloqueo, t_original=${p.t_original}`);
+            p.tiempo_bloqueo_restante--;
+            p.t_bloqueo++;
+            
+            if (p.tiempo_bloqueo_restante <= 0) {
+                // El proceso sale del bloqueo
                 bloqueados.splice(i, 1);
+                p.estado = 'listo';
+                p.ha_sido_bloqueado = true;
+                p.ejecutado_desde_bloqueo = 0;
+                listos.push(p);
+                logEvent(`${p.name} sale del bloqueo, se reinserta en cola`);
             }
         }
 
-        // Ordenar nuevamente después de agregar procesos del bloqueo
-        listos = ordenarProcesos(listos, currentAlgorithm);
+        // 3. Ordenar cola de listos por SJF
+        listos.sort(Proc.compararSJF);
+        if (listos.length > 0) {
+            logEvent(`Cola de listos (orden SJF): ${listos.map(p => `${p.name}(${p.t_original})`).join(', ')}`);
+        }
 
-        // Si no hay proceso actual, tomar de listos
+        // 4. Seleccionar proceso para ejecutar (si no hay uno actual)
         if (!proceso_actual && listos.length > 0) {
             proceso_actual = listos.shift();
             proceso_actual.estado = 'ejecutando';
-            if (proceso_actual.tr === null) proceso_actual.tr = tiempo - proceso_actual.li;
-            debugLog.push(`T=${tiempo}: → ${proceso_actual.name} comienza ejecución (TR=${proceso_actual.tr})`);
+            
+            // Registrar tiempo de primera respuesta (si es la primera vez)
+            if (proceso_actual.tr === null) {
+                proceso_actual.tr = tiempo - proceso_actual.li;
+                logEvent(`→ ${proceso_actual.name} comienza a ejecutar (PRIMERA VEZ, TR=${proceso_actual.tr})`);
+            } else {
+                logEvent(`→ ${proceso_actual.name} continúa ejecutando`);
+            }
         }
 
-        // Ejecutar
+        // 5. Ejecutar proceso actual (si hay)
         if (proceso_actual) {
+            // Registrar en timeline
             timeline.push(proceso_actual.name);
             
-            proceso_actual.t--;
+            // Ejecutar una unidad de tiempo
+            proceso_actual.t_restante--;
             proceso_actual.t_ejecucion++;
-            proceso_actual.contador_ejecucion++;
-
-            // ¿Terminado?
-            if (proceso_actual.t <= 0) {
+            proceso_actual.ejecutado_desde_bloqueo++;
+            
+            // Verificar si el proceso termina
+            if (proceso_actual.t_restante <= 0) {
                 proceso_actual.estado = 'terminado';
                 proceso_actual.if = tiempo + 1;
                 terminados.push(proceso_actual);
-                debugLog.push(`T=${tiempo}: ★ ${proceso_actual.name} TERMINA en t=${proceso_actual.if}`);
+                logEvent(`★ ${proceso_actual.name} TERMINA en t=${proceso_actual.if}`);
                 proceso_actual = null;
-            } 
-            // ¿Debe bloquearse?
+            }
+            // Verificar si debe bloquearse
             else if (proceso_actual.bi > 0 && 
-                     proceso_actual.contador_ejecucion >= proceso_actual.bi && 
-                     !proceso_actual.ya_se_bloqueo) {
+                     proceso_actual.ejecutado_desde_bloqueo >= proceso_actual.bi && 
+                     !proceso_actual.ha_sido_bloqueado) {
                 
                 proceso_actual.estado = 'bloqueado';
                 proceso_actual.tiempo_bloqueo_restante = proceso_actual.bd;
+                proceso_actual.ha_sido_bloqueado = true;
                 bloqueados.push(proceso_actual);
-                debugLog.push(`T=${tiempo}: ⚡ ${proceso_actual.name} SE BLOQUEA por ${proceso_actual.bd}u (ejecutó ${proceso_actual.contador_ejecucion}/${proceso_actual.bi})`);
+                logEvent(`⚡ ${proceso_actual.name} SE BLOQUEA por ${proceso_actual.bd}u (ejecutó ${proceso_actual.ejecutado_desde_bloqueo}/${proceso_actual.bi})`);
                 proceso_actual = null;
             }
         } else {
-            // CPU idle
+            // CPU inactiva
             timeline.push(null);
+            logEvent(`CPU inactiva`);
         }
 
-        // Incrementar espera para procesos en cola (listos)
+        // 6. Incrementar tiempo de espera para procesos en cola
         for (let p of listos) {
             p.t_espera++;
         }
 
+        // 7. Avanzar reloj
         tiempo++;
     }
 
-    // Orden final por nombre para reporte
-    terminados.sort((a,b) => a.name.localeCompare(b.name));
+    // Finalizar simulación
+    if (tiempo >= safeLimit) {
+        logEvent(`!!! ALERTA: Límite de seguridad alcanzado (${safeLimit})`);
+    } else {
+        logEvent(`=== SIMULACIÓN COMPLETADA en ${tiempo} unidades ===`);
+    }
 
-    // Calcular T_total
-    const T_total_sistema = Math.max(...terminados.map(p => p.if));
+    // Ordenar procesos terminados por nombre para reporte
+    terminados.sort((a, b) => a.name.localeCompare(b.name));
 
-    // Guardar log de depuración
-    window.lastDebugLog = debugLog;
-    
-    return {procesos, terminados, timeline, T_total_sistema, debugLog};
+    return {procesos, terminados, timeline, T_total_sistema: tiempo, debugLog};
 }
 
-/* Renderizado: tabla y gantt */
+/* Renderizado de resultados */
 function renderResults(sim) {
     const {procesos, terminados, timeline, T_total_sistema, debugLog} = sim;
+
+    // Mostrar log de depuración
+    const debugContent = document.getElementById('debugContent');
+    debugContent.innerHTML = debugLog.map((entry, i) => 
+        `<div class="log-entry">${entry}</div>`
+    ).join('');
 
     // Actualizar información de CPU
     const cpuInfo = document.getElementById('cpuInfo');
@@ -720,11 +723,10 @@ function renderResults(sim) {
         return;
     }
     
-    // Calcular métricas generales
+    // Calcular métricas
     const tiempoOcioso = timeline.filter(t => t === null).length;
     const eficiencia = ((T_total_sistema - tiempoOcioso) / T_total_sistema * 100).toFixed(1);
     
-    // Calcular métricas SJF
     let tiempoEsperaPromedio = 0;
     let tiempoRetornoPromedio = 0;
     let tiempoRespuestaPromedio = 0;
@@ -742,22 +744,18 @@ function renderResults(sim) {
             <span><strong>Espera promedio:</strong> ${tiempoEsperaPromedio}u</span>
             <span><strong>Retorno promedio:</strong> ${tiempoRetornoPromedio}u</span>
             <span><strong>Respuesta promedio:</strong> ${tiempoRespuestaPromedio}u</span>
-            <span><strong>Algoritmo:</strong> ${currentAlgorithm}</span>
-        </div>
-        <div style="margin-top: 10px; font-size: 14px;">
-            <strong>Timeline:</strong> ${timeline.map(t => t || '_').join('')}
         </div>
     `;
 
     // Tabla resultados
     let html = `<table><thead><tr>
-        <th>Proceso</th><th>Llegada</th><th>t</th><th>Espera</th><th>Bloqueo</th><th>if</th><th>T</th><th>T-t</th><th>P</th><th>TR</th>
+        <th>Proceso</th><th>Llegada</th><th>t</th><th>Espera</th><th>Bloqueo</th><th>Finaliza</th><th>T</th><th>T-t</th><th>P</th><th>TR</th>
     </tr></thead><tbody>`;
 
     for (const p of terminados) {
-        const T = p.if - p.li;
-        const perdido = T - p.t_original;
-        const P = (T / p.t_original).toFixed(2);
+        const T = p.if - p.li;                    // Tiempo de retorno (Turnaround)
+        const perdido = T - p.t_original;         // Tiempo perdido
+        const P = (T / p.t_original).toFixed(2);  // Penalización
         html += `<tr>
             <td><strong>${p.name}</strong></td>
             <td>${p.li}</td>
@@ -774,57 +772,61 @@ function renderResults(sim) {
     html += `</tbody></table>`;
     document.getElementById('tablaResultados').innerHTML = html;
 
-    // Gantt: construimos estado por proceso por unidad de tiempo
+    // Diagrama de Gantt
+    renderGantt(procesos, timeline, T_total_sistema);
+}
+
+/* Renderizar Diagrama de Gantt */
+function renderGantt(procesos, timeline, totalTime) {
+    // Inicializar estados
     const procNames = procesos.map(p => p.name);
-    const states = procNames.map(() => Array(T_total_sistema).fill('empty'));
+    const estados = Array.from({length: procNames.length}, 
+        () => Array(totalTime).fill('empty'));
 
-    // Para reconstruir bloqueos y ejecuciones
-    const aux = {};
-    for (const p of procesos) aux[p.name] = {
-        executedSinceLastBlock: 0, 
-        hasBlocked: false, 
-        remainingBlock: 0
-    };
-
-    for (let t = 0; t < T_total_sistema; t++) {
-        const current = timeline[t] || null;
+    // Procesar timeline para determinar estados
+    for (let t = 0; t < totalTime; t++) {
+        const procName = timeline[t];
         
-        // Marcar ejecución
-        if (current) {
-            const idx = procNames.indexOf(current);
+        if (procName) {
+            const idx = procNames.indexOf(procName);
             if (idx >= 0) {
-                states[idx][t] = 'executing';
-                aux[current].executedSinceLastBlock++;
-                
-                // Si debe bloquearse ahora
-                const p = procesos.find(x => x.name === current);
-                if (!aux[current].hasBlocked && p.bi > 0 && aux[current].executedSinceLastBlock >= p.bi) {
-                    aux[current].hasBlocked = true;
-                    aux[current].remainingBlock = p.bd;
-                    aux[current].executedSinceLastBlock = 0;
-                }
-            }
-        }
-        
-        // Aplicar bloqueos pendientes para cada proceso
-        for (const name of procNames) {
-            const a = aux[name];
-            if (a.remainingBlock > 0) {
-                const idx = procNames.indexOf(name);
-                if (states[idx][t] !== 'executing') {
-                    states[idx][t] = 'blocked';
-                    a.remainingBlock = Math.max(0, a.remainingBlock - 1);
-                }
+                estados[idx][t] = 'executing';
             }
         }
     }
 
-    // Marcar 'ready' (llegó pero no ejecutó y no estaba bloqueado)
-    for (let pi = 0; pi < procNames.length; pi++) {
+    // Aplicar lógica de bloqueos
+    for (let pi = 0; pi < procesos.length; pi++) {
         const p = procesos[pi];
-        for (let t = 0; t < T_total_sistema; t++) {
-            if (t >= p.li && states[pi][t] === 'empty') {
-                states[pi][t] = 'ready';
+        let enBloqueo = false;
+        let tiempoBloqueoRestante = 0;
+        let ejecutadoDesdeBloqueo = 0;
+        let yaBloqueado = false;
+        
+        for (let t = 0; t < totalTime; t++) {
+            // Si el proceso está ejecutando en este tiempo
+            if (estados[pi][t] === 'executing') {
+                ejecutadoDesdeBloqueo++;
+                
+                // Verificar si debe bloquearse
+                if (!yaBloqueado && p.bi > 0 && ejecutadoDesdeBloqueo >= p.bi) {
+                    yaBloqueado = true;
+                    enBloqueo = true;
+                    tiempoBloqueoRestante = p.bd;
+                    ejecutadoDesdeBloqueo = 0;
+                    
+                    // Marcar los próximos tiempos como bloqueado (si no está ejecutando)
+                    for (let b = 1; b <= p.bd && t + b < totalTime; b++) {
+                        if (estados[pi][t + b] !== 'executing') {
+                            estados[pi][t + b] = 'blocked';
+                        }
+                    }
+                }
+            }
+            
+            // Manejar estado de listo (llegó pero no ejecuta)
+            if (t >= p.li && estados[pi][t] === 'empty') {
+                estados[pi][t] = 'ready';
             }
         }
     }
@@ -832,20 +834,20 @@ function renderResults(sim) {
     // Render escala de tiempo
     const timeScaleEl = document.getElementById('timeScale');
     timeScaleEl.innerHTML = '';
-    for (let i = 0; i < T_total_sistema; i++) {
+    for (let i = 0; i < totalTime; i++) {
         const div = document.createElement('div');
         div.className = 'time-tick';
         div.textContent = i;
         timeScaleEl.appendChild(div);
     }
 
-    // Render filas (de abajo hacia arriba)
+    // Render filas del diagrama (de abajo hacia arriba)
     const grid = document.getElementById('diagramaGantt');
     grid.innerHTML = '';
     
-    // Invertir el orden para mostrar de abajo hacia arriba
+    // Invertir orden para mostrar abajo hacia arriba
     const reversedProcNames = [...procNames].reverse();
-    const reversedStates = [...states].reverse();
+    const reversedEstados = [...estados].reverse();
     
     for (let pi = 0; pi < reversedProcNames.length; pi++) {
         const row = document.createElement('div');
@@ -859,30 +861,32 @@ function renderResults(sim) {
         const track = document.createElement('div');
         track.className = 'time-track';
 
-        for (let t = 0; t < T_total_sistema; t++) {
-            const s = reversedStates[pi][t];
+        for (let t = 0; t < totalTime; t++) {
+            const estado = reversedEstados[pi][t];
             const block = document.createElement('div');
-            block.className = 'block ' + s;
-            block.title = `${reversedProcNames[pi]} @ t=${t}: ${
-                s === 'executing' ? 'Ejecutando' : 
-                s === 'blocked' ? 'Bloqueado' : 
-                s === 'ready' ? 'En cola' : 'Inactivo'
-            }`;
-            block.textContent = s === 'executing' ? reversedProcNames[pi] : 
-                               (s === 'blocked' ? 'B' : 
-                               (s === 'ready' ? '·' : ''));
+            block.className = 'block ' + estado;
+            
+            // Tooltip informativo
+            let estadoText = '';
+            switch(estado) {
+                case 'executing': estadoText = 'Ejecutando'; break;
+                case 'blocked': estadoText = 'Bloqueado'; break;
+                case 'ready': estadoText = 'En cola de listos'; break;
+                default: estadoText = 'Inactivo';
+            }
+            block.title = `${reversedProcNames[pi]} @ t=${t}: ${estadoText}`;
+            
+            // Texto dentro del bloque
+            block.textContent = estado === 'executing' ? reversedProcNames[pi] : 
+                               (estado === 'blocked' ? 'B' : 
+                               (estado === 'ready' ? '·' : ''));
+            
             track.appendChild(block);
         }
 
         row.appendChild(track);
         grid.appendChild(row);
     }
-    
-    // Mostrar información de depuración
-    const debugInfo = document.getElementById('debugInfo');
-    const debugContent = document.getElementById('debugContent');
-    
-    debugInfo.style.display = 'block';
 }
 
 /* Botón ejecutar */
@@ -892,12 +896,10 @@ document.getElementById('runSim').addEventListener('click', (e) => {
     renderResults(sim);
 });
 
-/* Ejecutar al cargar inicialmente */
+/* Ejecutar al cargar */
 window.addEventListener('load', () => {
     const sim = runSimulation();
     renderResults(sim);
-    // Agregar botón para ver log completo   
-    document.getElementById('debugInfo').appendChild(debugBtn);
 });
 </script>
 </body>
