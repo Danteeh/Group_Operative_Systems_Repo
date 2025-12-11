@@ -385,7 +385,7 @@
   </div>
 
 <script>
-/* Clase Proc - IDÉNTICA AL TEST.JS */
+/* Clase Proc */
 class Proc {
     constructor(name, li, t, bi, bd) {
         this.name = String(name);
@@ -513,9 +513,8 @@ document.getElementById('clearAll').addEventListener('click',(e)=>{
     }
 });
 
-/* Función para ejecutar simulación Priority - IDÉNTICA AL TEST.JS */
+/* Función para ejecutar simulación Priority */
 function runSimulation() {
-    // Leer procesos del formulario
     const rows = Array.from(formContainer.querySelectorAll('.form-row'));
     const procesos = rows.map(r => {
         const inputs = r.querySelectorAll('input');
@@ -528,27 +527,16 @@ function runSimulation() {
         );
     });
 
-    // Reset containers - IDÉNTICO AL TEST.JS
     let listos = [];
     let bloqueados = [];
     let terminados = [];
     let tiempo = 0;
     let proceso_actual = null;
     let timeline = [];
-    
-    // Para registrar estados por tiempo para el diagrama
-    const estadosPorTiempo = [];
 
-    while (terminados.length < procesos.length && tiempo < 50) {
-        // Registrar estados para este tiempo
-        const estadosTiempo = {
-            tiempo: tiempo,
-            ejecutando: null,
-            listos: [],
-            bloqueados: []
-        };
-        
-        // 1. Llegadas - IDÉNTICO
+    const safeLimit = procesos.reduce((sum, p) => sum + p.t_original + p.bd, 0) * 3 + 100;
+
+    while (terminados.length < procesos.length && tiempo < safeLimit) {
         for (let p of procesos) {
             if (p.estado === 'nuevo' && tiempo >= p.li) {
                 p.estado = 'listo';
@@ -556,23 +544,16 @@ function runSimulation() {
             }
         }
 
-        // 2. ORDENAR PRIORITY - IDÉNTICO
         listos.sort((a, b) => {
             if (a.t !== b.t) return a.t - b.t;
             return a.li - b.li;
         });
-        
-        // Registrar procesos listos
-        estadosTiempo.listos = listos.map(p => p.name);
 
-        // 3. Actualizar bloqueados - IDÉNTICO
         for (let p of bloqueados) {
             p.tiempo_bloqueo_restante--;
             p.t_bloqueo++;
-            estadosTiempo.bloqueados.push(p.name);
         }
         
-        // 4. Salir de bloqueo - IDÉNTICO
         for (let i = bloqueados.length - 1; i >= 0; i--) {
             const p = bloqueados[i];
             if (p.tiempo_bloqueo_restante <= 0) {
@@ -584,6 +565,7 @@ function runSimulation() {
             }
         }
 
+<<<<<<< HEAD
         // RE-ORDENAR DESPUÉS DE DESBLOQUEOS
         listos.sort((a, b) => {
             if (a.t !== b.t) return a.t - b.t;
@@ -608,30 +590,28 @@ function runSimulation() {
         }
 
         // 5. Tomar proceso - IDÉNTICO
+=======
+>>>>>>> cbb6518b9acb2e27ff474d3fcb3f1a95b73418d6
         if (!proceso_actual && listos.length > 0) {
             proceso_actual = listos.shift();
             proceso_actual.estado = 'ejecutando';
             if (proceso_actual.tr === null) proceso_actual.tr = tiempo - proceso_actual.li;
         }
 
-        // 6. Ejecutar - IDÉNTICO
         if (proceso_actual) {
             timeline.push(proceso_actual.name);
-            estadosTiempo.ejecutando = proceso_actual.name;
             
             proceso_actual.t--;
             proceso_actual.t_ejecucion++;
             proceso_actual.contador_total++;
             proceso_actual.contador_bloqueo++;
 
-            // ¿Terminado? - IDÉNTICO
             if (proceso_actual.t <= 0) {
                 proceso_actual.estado = 'terminado';
                 proceso_actual.if = tiempo + 1;
                 terminados.push(proceso_actual);
                 proceso_actual = null;
             } 
-            // ¿Debe bloquearse? - IDÉNTICO
             else if (proceso_actual.bi > 0 && 
                      proceso_actual.contador_bloqueo >= proceso_actual.bi && 
                      !proceso_actual.ya_se_bloqueo) {
@@ -647,13 +627,9 @@ function runSimulation() {
             timeline.push('_');
         }
 
-        // 7. Espera para listos - IDÉNTICO
         for (let p of listos) {
             p.t_espera++;
         }
-        
-        // Guardar estados para el diagrama
-        estadosPorTiempo.push(estadosTiempo);
         
         tiempo++;
     }
@@ -661,22 +637,106 @@ function runSimulation() {
     const maxIf = terminados.length ? Math.max(...terminados.map(p => p.if)) : timeline.length;
     while (timeline.length < maxIf) timeline.push('_');
 
-    // Guardar estados en cada proceso para referencia
-    for (const p of procesos) {
-        p.estadosPorTiempo = estadosPorTiempo;
-    }
-
     terminados.sort((a,b) => a.name.localeCompare(b.name));
     const T_total_sistema = maxIf;
 
-    return {procesos, terminados, timeline, T_total_sistema, estadosPorTiempo};
+    return {procesos, terminados, timeline, T_total_sistema};
 }
 
-/* Renderizar resultados */
-function renderResults(sim) {
-    const {procesos, terminados, timeline, T_total_sistema, estadosPorTiempo} = sim;
+/* Función para calcular tiempos de espera desde el Gantt */
+function calcularEsperaDesdeGantt(procesos, timeline, totalTime) {
+    const procNames = procesos.map(p => p.name);
+    const estados = Array.from({length: procNames.length}, 
+        () => Array(totalTime).fill('empty'));
+    
+    for (let t = 0; t < totalTime; t++) {
+        const procName = timeline[t];
+        if (procName && procName !== '_') {
+            const idx = procNames.indexOf(procName);
+            if (idx >= 0) {
+                estados[idx][t] = 'executing';
+            }
+        }
+    }
+    
+    for (let pi = 0; pi < procesos.length; pi++) {
+        const p = procesos[pi];
+        let ejecutadoDesdeBloqueo = 0;
+        let yaBloqueado = false;
+        
+        for (let t = 0; t < totalTime; t++) {
+            if (estados[pi][t] === 'executing') {
+                ejecutadoDesdeBloqueo++;
+                
+                if (!yaBloqueado && p.bi > 0 && ejecutadoDesdeBloqueo >= p.bi) {
+                    yaBloqueado = true;
+                    
+                    for (let b = 1; b <= p.bd && t + b < totalTime; b++) {
+                        if (estados[pi][t + b] !== 'executing') {
+                            estados[pi][t + b] = 'blocked';
+                        }
+                    }
+                    ejecutadoDesdeBloqueo = 0;
+                }
+            }
+        }
+    }
+    
+    const hayEjecucion = Array(totalTime).fill(false);
+    for (let t = 0; t < totalTime; t++) {
+        for (let pi = 0; pi < procNames.length; pi++) {
+            if (estados[pi][t] === 'executing') {
+                hayEjecucion[t] = true;
+                break;
+            }
+        }
+    }
+    
+    for (let pi = 0; pi < procesos.length; pi++) {
+        const p = procesos[pi];
+        let ejecuciones = 0;
+        
+        for (let t = p.li; t < totalTime; t++) {
+            if (estados[pi][t] === 'executing') {
+                ejecuciones++;
+            }
+            
+            if (ejecuciones >= p.t_original) {
+                if (estados[pi][t] === 'empty') {
+                    estados[pi][t] = 'empty';
+                }
+                continue;
+            }
+            
+            if (estados[pi][t] === 'empty' && hayEjecucion[t]) {
+                estados[pi][t] = 'ready';
+            }
+        }
+    }
+    
+    for (let pi = 0; pi < procesos.length; pi++) {
+        const p = procesos[pi];
+        let espera = 0;
+        
+        const tiempoFinal = p.if || totalTime;
+        for (let t = p.li; t < tiempoFinal; t++) {
+            if (estados[pi][t] === 'ready') {
+                espera++;
+            }
+        }
+        
+        p.t_espera = espera;
+    }
+    
+    return { estados };
+}
 
-    // Actualizar información de CPU
+/* Renderizado de resultados */
+function renderResults(sim) {
+    const {procesos, terminados, timeline, T_total_sistema} = sim;
+
+    const { estados } = calcularEsperaDesdeGantt(procesos, timeline, T_total_sistema);
+    
     const cpuInfo = document.getElementById('cpuInfo');
     if (terminados.length === 0) {
         cpuInfo.textContent = 'No se completó la simulación.';
@@ -686,19 +746,28 @@ function renderResults(sim) {
     const tiempoOcioso = timeline.filter(t => t === '_').length;
     const eficiencia = ((T_total_sistema - tiempoOcioso) / T_total_sistema * 100).toFixed(1);
     
-    // Timeline limpio (sin underscores)
-    const timelineClean = timeline.filter(t => t !== '_').join('');
+    let tiempoEsperaPromedio = 0;
+    let tiempoRetornoPromedio = 0;
+    let tiempoRespuestaPromedio = 0;
+    
+    if (terminados.length > 0) {
+        tiempoEsperaPromedio = (terminados.reduce((sum, p) => sum + p.t_espera, 0) / terminados.length).toFixed(2);
+        tiempoRetornoPromedio = (terminados.reduce((sum, p) => sum + (p.if - p.li), 0) / terminados.length).toFixed(2);
+        tiempoRespuestaPromedio = (terminados.reduce((sum, p) => sum + p.tr, 0) / terminados.length).toFixed(2);
+    }
     
     cpuInfo.innerHTML = `
-        <strong>Tiempo total:</strong> ${T_total_sistema}u | 
-        <strong>Eficiencia CPU:</strong> ${eficiencia}% | 
-        <strong>Procesos completados:</strong> ${terminados.length} |
-        <strong>Timeline:</strong> ${timelineClean}
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+            <span><strong>Tiempo total:</strong> ${T_total_sistema}u</span>
+            <span><strong>Eficiencia CPU:</strong> ${eficiencia}%</span>
+            <span><strong>Espera promedio:</strong> ${tiempoEsperaPromedio}u</span>
+            <span><strong>Retorno promedio:</strong> ${tiempoRetornoPromedio}u</span>
+            <span><strong>Respuesta promedio:</strong> ${tiempoRespuestaPromedio}u</span>
+        </div>
     `;
 
-    // Tabla resultados
     let html = `<table><thead><tr>
-        <th>Proceso</th><th>t</th><th>Ejecuciones</th><th>Espera</th><th>Bloqueo</th><th>if</th><th>T</th><th>T-t</th><th>P</th><th>TR</th>
+        <th>Proceso</th><th>Llegada</th><th>t</th><th>Espera</th><th>Bloqueo</th><th>Finaliza</th><th>T</th><th>T-t</th><th>P</th><th>TR</th>
     </tr></thead><tbody>`;
 
     for (const p of terminados) {
@@ -707,8 +776,8 @@ function renderResults(sim) {
         const P = (T / p.t_original).toFixed(2);
         html += `<tr>
             <td><strong>${p.name}</strong></td>
+            <td>${p.li}</td>
             <td>${p.t_original}</td>
-            <td>${p.contador_total}</td>
             <td>${p.t_espera}</td>
             <td>${p.t_bloqueo}</td>
             <td>${p.if}</td>
@@ -721,92 +790,67 @@ function renderResults(sim) {
     html += `</tbody></table>`;
     document.getElementById('tablaResultados').innerHTML = html;
 
-    // Diagrama de Gantt - ORDEN INVERTIDO (A abajo, F arriba)
-    // Ordenar procesos por nombre en orden inverso: F, E, D, C, B, A
-    const procesosOrdenados = [...procesos].sort((a, b) => b.name.localeCompare(a.name));
-    const procNames = procesosOrdenados.map(p => p.name);
+    renderGanttConEstados(procesos, estados, T_total_sistema);
+}
+
+/* Función para renderizar Gantt con estados ya calculados */
+function renderGanttConEstados(procesos, estados, totalTime) {
+    const procNames = procesos.map(p => p.name);
     
-    const states = procNames.map(() => Array(T_total_sistema).fill('empty'));
-
-    // Rellenar estados basados en estadosPorTiempo
-    for (let t = 0; t < T_total_sistema; t++) {
-        const estadosT = estadosPorTiempo[t] || {};
-        for (let pi = 0; pi < procNames.length; pi++) {
-            const procName = procNames[pi];
-            const p = procesos.find(proc => proc.name === procName);
-            
-            if (estadosT.ejecutando === procName) {
-                states[pi][t] = 'executing';
-            } else if (estadosT.bloqueados && estadosT.bloqueados.includes(procName)) {
-                states[pi][t] = 'blocked';
-            } else if (estadosT.listos && estadosT.listos.includes(procName)) {
-                states[pi][t] = 'ready';
-            } else if (p && t >= p.li && p.estado !== 'terminado') {
-                // Llegó pero no está listo ni ejecutando (inactivo)
-                states[pi][t] = 'empty';
-            } else if (timeline[t] === '_') {
-                // CPU idle
-                states[pi][t] = 'empty';
-            }
-        }
-    }
-
-    // Escala de tiempo
     const timeScaleEl = document.getElementById('timeScale');
     timeScaleEl.innerHTML = '';
-    for (let i = 0; i < T_total_sistema; i++) {
+    for (let i = 0; i < totalTime; i++) {
         const div = document.createElement('div');
         div.className = 'time-tick';
         div.textContent = i;
         timeScaleEl.appendChild(div);
     }
 
-    // Diagrama de Gantt - PROCESOS EN ORDEN INVERTIDO (F arriba, A abajo)
     const grid = document.getElementById('diagramaGantt');
     grid.innerHTML = '';
     
-    // Ya están en orden inverso (F, E, D, C, B, A)
-    for (let pi = 0; pi < procNames.length; pi++) {
+    const reversedProcNames = [...procNames].reverse();
+    const reversedEstados = [...estados].reverse();
+    
+    for (let pi = 0; pi < reversedProcNames.length; pi++) {
         const row = document.createElement('div');
         row.className = 'timeline-row';
         
         const label = document.createElement('div');
         label.className = 'process-label';
-        label.textContent = procNames[pi];
+        label.textContent = reversedProcNames[pi];
         row.appendChild(label);
 
         const track = document.createElement('div');
         track.className = 'time-track';
 
-        for (let t = 0; t < T_total_sistema; t++) {
-            const s = states[pi][t];
+        for (let t = 0; t < totalTime; t++) {
+            const estado = reversedEstados[pi][t];
             const block = document.createElement('div');
-            block.className = 'block ' + s;
+            block.className = 'block ' + estado;
             
-            // Tooltip informativo
-            const p = procesos.find(proc => proc.name === procNames[pi]);
-            let estadoStr = '';
-            if (s === 'executing') estadoStr = 'Ejecutando';
-            else if (s === 'blocked') estadoStr = 'Bloqueado';
-            else if (s === 'ready') estadoStr = 'En cola';
-            else if (p && t >= p.li) estadoStr = 'Inactivo (ya llegó)';
-            else estadoStr = 'No ha llegado';
+            let estadoText = '';
+            switch(estado) {
+                case 'executing': estadoText = 'Ejecutando'; break;
+                case 'blocked': estadoText = 'Bloqueado'; break;
+                case 'ready': estadoText = 'En cola de listos'; break;
+                case 'empty': 
+                    const p = procesos.find(p => p.name === reversedProcNames[pi]);
+                    estadoText = t < p.li ? 'No ha llegado' : 'Inactivo';
+                    break;
+            }
+            block.title = `${reversedProcNames[pi]} @ t=${t}: ${estadoText}`;
             
-            block.title = `${procNames[pi]} @ t=${t}: ${estadoStr}`;
+            block.textContent = estado === 'executing' ? reversedProcNames[pi] : 
+                               (estado === 'blocked' ? 'B' : 
+                               (estado === 'ready' ? '·' : ''));
             
-            block.textContent = s === 'executing' ? procNames[pi] : 
-                               (s === 'blocked' ? 'B' : 
-                               (s === 'ready' ? '·' : ''));
             track.appendChild(block);
         }
 
         row.appendChild(track);
         grid.appendChild(row);
     }
-    
-    // Verificar timeline en consola
-    console.log("Timeline generado en HTML:", timeline.join(' '));
-    console.log("Timeline esperado del test.js:", "A A A C C C C C F F C C A A A D D D B E E B B B B B B B E E E E E E E");
 }
 
 /* Botón ejecutar */
