@@ -444,7 +444,8 @@ class Proc {
         this.t_original = Number(t);
         this.t = Number(t);
         this.bi = Number(bi);
-        this.bd = Number(bd);
+        this.bd = Number(bd+1);
+		this.bd_datos= Number(bd);
 
         this.estado = 'nuevo';
         this.tiempo_bloqueo_restante = 0;
@@ -780,7 +781,7 @@ function renderResults(sim) {
             <td>${p.t_original}</td>
             <td>${p.t_ejecucion}</td>
             <td>${p.t_espera}</td>
-            <td>${p.t_bloqueo}</td>
+            <td>${p.bd_datos}</td>
             <td>${p.if}</td>
             <td>${T}</td>
             <td>${perdido}</td>
