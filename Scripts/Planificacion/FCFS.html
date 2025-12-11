@@ -457,7 +457,6 @@ loadDefaults();
 
 document.getElementById('addRow').addEventListener('click', (e)=>{
     e.preventDefault();
-    // Generar nombre automático (P1, P2, ...)
     const rows = formContainer.querySelectorAll('.form-row');
     const nextNum = rows.length + 1;
     formContainer.appendChild(createProcessRow({name:`P${nextNum}`, li:0, t:3, bi:0, bd:0}));
@@ -499,7 +498,81 @@ class Proc {
     }
 }
 
-/* Ejecutar simulación con datos del formulario */
+/* Función que calcula tiempos de espera REALES desde diagrama de Gantt */
+function calcularEsperasDesdeGantt(procesos, timeline, T_total_sistema) {
+    // Construir estados del Gantt
+    const procNames = procesos.map(p => p.name);
+    const states = procNames.map(() => Array(T_total_sistema).fill('empty'));
+    
+    // Reconstruir bloqueos y ejecuciones
+    const aux = {};
+    for (const p of procesos) aux[p.name] = {
+        executedSinceLastBlock: 0, 
+        hasBlocked: false, 
+        remainingBlock: 0
+    };
+
+    for (let t = 0; t < T_total_sistema; t++) {
+        const current = timeline[t] || null;
+        
+        // Aplicar bloqueos primero
+        for (const name of procNames) {
+            const a = aux[name];
+            if (a.remainingBlock > 0) {
+                const idx = procNames.indexOf(name);
+                states[idx][t] = 'blocked';
+                a.remainingBlock = Math.max(0, a.remainingBlock - 1);
+            }
+        }
+        
+        // Marcar ejecución
+        if (current) {
+            const idx = procNames.indexOf(current);
+            if (idx >= 0 && states[idx][t] !== 'blocked') {
+                states[idx][t] = 'executing';
+                aux[current].executedSinceLastBlock++;
+                
+                const p = procesos.find(x => x.name === current);
+                if (!aux[current].hasBlocked && p.bi > 0 && aux[current].executedSinceLastBlock >= p.bi) {
+                    aux[current].hasBlocked = true;
+                    aux[current].remainingBlock = p.bd;
+                    aux[current].executedSinceLastBlock = 0;
+                }
+            }
+        }
+    }
+
+    // Marcar 'ready' (gris)
+    for (let pi = 0; pi < procNames.length; pi++) {
+        const p = procesos[pi];
+        for (let t = 0; t < T_total_sistema; t++) {
+            if (t >= p.li && states[pi][t] === 'empty') {
+                states[pi][t] = 'ready';
+            }
+        }
+    }
+    
+    // Calcular esperas reales
+    const esperasReales = {};
+    
+    for (let pi = 0; pi < procesos.length; pi++) {
+        const p = procesos[pi];
+        let espera = 0;
+        
+        // Recorrer solo hasta que termine el proceso
+        const ifTime = p.if || T_total_sistema;
+        for (let t = p.li; t < ifTime; t++) {
+            if (states[pi][t] === 'ready') {
+                espera++;
+            }
+        }
+        
+        esperasReales[p.name] = espera;
+    }
+    
+    return esperasReales;
+}
+
 /* Ejecutar simulación con datos del formulario */
 function runSimulation() {
     // Leer procesos del formulario
@@ -523,7 +596,6 @@ function runSimulation() {
     let proceso_actual = null;
     let timeline = [];
 
-    // Por seguridad evitar loops infinitos
     const safeLimit = procesos.reduce((s,p) => s + p.t_original + p.bd, 0) * 5 + 2000;
 
     while (terminados.length < procesos.length && tiempo < safeLimit) {
@@ -535,7 +607,6 @@ function runSimulation() {
             }
         }
 
-        // Ordenar listos por tiempo de llegada (li) y luego por nombre para determinismo
         listos.sort((a,b) => a.li - b.li || a.name.localeCompare(b.name));
 
         // Actualizar bloqueados
@@ -586,15 +657,7 @@ function runSimulation() {
                 proceso_actual = null;
             }
         } else {
-            // CPU idle
             timeline.push(null);
-        }
-
-        // CORRECCIÓN: Solo incrementar espera para procesos que están en listos y NO ejecutando
-        for (let p of procesos) {
-            if (p.estado === 'listo' && p !== proceso_actual) {
-                p.t_espera++;
-            }
         }
 
         tiempo++;
@@ -605,6 +668,14 @@ function runSimulation() {
 
     // Calcular T_total
     const T_total_sistema = Math.max(...terminados.map(p => p.if));
+
+    // Calcular esperas desde Gantt y asignarlas
+    const esperasReales = calcularEsperasDesdeGantt(procesos, timeline, T_total_sistema);
+    for (const p of procesos) {
+        if (esperasReales[p.name] !== undefined) {
+            p.t_espera = esperasReales[p.name];
+        }
+    }
 
     return {procesos, terminados, timeline, T_total_sistema};
 }
@@ -669,14 +740,23 @@ function renderResults(sim) {
     for (let t = 0; t < T_total_sistema; t++) {
         const current = timeline[t] || null;
         
-        // Marcar ejecución
+        // PRIMERO: Aplicar bloqueos pendientes
+        for (const name of procNames) {
+            const a = aux[name];
+            if (a.remainingBlock > 0) {
+                const idx = procNames.indexOf(name);
+                states[idx][t] = 'blocked';
+                a.remainingBlock = Math.max(0, a.remainingBlock - 1);
+            }
+        }
+        
+        // LUEGO: Marcar ejecución solo si no está bloqueado
         if (current) {
             const idx = procNames.indexOf(current);
-            if (idx >= 0) {
+            if (idx >= 0 && states[idx][t] !== 'blocked') {
                 states[idx][t] = 'executing';
                 aux[current].executedSinceLastBlock++;
                 
-                // Si debe bloquearse ahora
                 const p = procesos.find(x => x.name === current);
                 if (!aux[current].hasBlocked && p.bi > 0 && aux[current].executedSinceLastBlock >= p.bi) {
                     aux[current].hasBlocked = true;
@@ -685,170 +765,7 @@ function renderResults(sim) {
                 }
             }
         }
-        
-        // Aplicar bloqueos pendientes para cada proceso
-        for (const name of procNames) {
-            const a = aux[name];
-            if (a.remainingBlock > 0) {
-                const idx = procNames.indexOf(name);
-                if (states[idx][t] !== 'executing') {
-                    states[idx][t] = 'blocked';
-                    a.remainingBlock = Math.max(0, a.remainingBlock - 1);
-                }
-            }
-        }
     }
-
-    // Marcar 'ready' (llegó pero no ejecutó y no estaba bloqueado)
-    for (let pi = 0; pi < procNames.length; pi++) {
-        const p = procesos[pi];
-        for (let t = 0; t < T_total_sistema; t++) {
-            if (t >= p.li && states[pi][t] === 'empty') {
-                states[pi][t] = 'ready';
-            }
-        }
-    }
-
-    // Render escala de tiempo
-    const timeScaleEl = document.getElementById('timeScale');
-    timeScaleEl.innerHTML = '';
-    for (let i = 0; i < T_total_sistema; i++) {
-        const div = document.createElement('div');
-        div.className = 'time-tick';
-        div.textContent = i;
-        timeScaleEl.appendChild(div);
-    }
-
-    // Render filas (de abajo hacia arriba)
-    const grid = document.getElementById('diagramaGantt');
-    grid.innerHTML = '';
-    
-    // Invertir el orden para mostrar de abajo hacia arriba
-    const reversedProcNames = [...procNames].reverse();
-    const reversedStates = [...states].reverse();
-    
-    for (let pi = 0; pi < reversedProcNames.length; pi++) {
-        const row = document.createElement('div');
-        row.className = 'timeline-row';
-        
-        const label = document.createElement('div');
-        label.className = 'process-label';
-        label.textContent = reversedProcNames[pi];
-        row.appendChild(label);
-
-        const track = document.createElement('div');
-        track.className = 'time-track';
-
-        for (let t = 0; t < T_total_sistema; t++) {
-            const s = reversedStates[pi][t];
-            const block = document.createElement('div');
-            block.className = 'block ' + s;
-            block.title = `${reversedProcNames[pi]} @ t=${t}: ${
-                s === 'executing' ? 'Ejecutando' : 
-                s === 'blocked' ? 'Bloqueado' : 
-                s === 'ready' ? 'En cola' : 'Inactivo'
-            }`;
-            block.textContent = s === 'executing' ? reversedProcNames[pi] : 
-                               (s === 'blocked' ? 'B' : 
-                               (s === 'ready' ? '·' : ''));
-            track.appendChild(block);
-        }
-
-        row.appendChild(track);
-        grid.appendChild(row);
-    }
-}
-
-/* Renderizado: tabla y gantt */
-function renderResults(sim) {
-    const {procesos, terminados, timeline, T_total_sistema} = sim;
-
-    // Actualizar información de CPU
-    const cpuInfo = document.getElementById('cpuInfo');
-    if (terminados.length === 0) {
-        cpuInfo.textContent = 'No se completó la simulación.';
-        return;
-    }
-    
-    // Calcular métricas generales
-    const tiempoOcioso = timeline.filter(t => t === null).length;
-    const eficiencia = ((T_total_sistema - tiempoOcioso) / T_total_sistema * 100).toFixed(1);
-    
-    cpuInfo.innerHTML = `
-        <span style="color: var(--accent);">Tiempo total del sistema:</span> ${T_total_sistema} unidades | 
-        <span style="color: var(--accent);">Eficiencia CPU:</span> ${eficiencia}% | 
-        <span style="color: var(--accent);">Procesos completados:</span> ${terminados.length}
-    `;
-
-    // Tabla resultados
-    let html = `<table><thead><tr>
-        <th>Proceso</th><th>t</th><th>Espera</th><th>Bloqueo</th><th>if</th><th>T</th><th>T-t</th><th>P</th><th>TR</th>
-    </tr></thead><tbody>`;
-
-    for (const p of terminados) {
-        const T = p.if - p.li;
-        const perdido = T - p.t_original;
-        const P = (T / p.t_original).toFixed(2);
-        html += `<tr>
-            <td><strong>${p.name}</strong></td>
-            <td>${p.t_original}</td>
-            <td>${p.t_espera}</td>
-            <td>${p.t_bloqueo}</td>
-            <td>${p.if}</td>
-            <td>${T}</td>
-            <td>${perdido}</td>
-            <td>${P}</td>
-            <td>${p.tr}</td>
-        </tr>`;
-    }
-    html += `</tbody></table>`;
-    document.getElementById('tablaResultados').innerHTML = html;
-
-    // Gantt: construimos estado por proceso por unidad de tiempo
-    const procNames = procesos.map(p => p.name);
-    const states = procNames.map(() => Array(T_total_sistema).fill('empty'));
-
-    // Para reconstruir bloqueos y ejecuciones
-    const aux = {};
-    for (const p of procesos) aux[p.name] = {
-        executedSinceLastBlock: 0, 
-        hasBlocked: false, 
-        remainingBlock: 0
-    };
-
-for (let t = 0; t < T_total_sistema; t++) {
-    const current = timeline[t] || null;
-    
-    // PRIMERO: Aplicar bloqueos pendientes (esto es clave)
-    // Los procesos bloqueados no pueden ejecutar en este instante
-    for (const name of procNames) {
-        const a = aux[name];
-        if (a.remainingBlock > 0) {
-            const idx = procNames.indexOf(name);
-            // Si está bloqueado, marcar como bloqueado (incluso si "current" es este proceso)
-            states[idx][t] = 'blocked';
-            a.remainingBlock = Math.max(0, a.remainingBlock - 1);
-        }
-    }
-    
-    // LUEGO: Marcar ejecución solo si no está bloqueado
-    if (current) {
-        const idx = procNames.indexOf(current);
-        if (idx >= 0 && states[idx][t] !== 'blocked') {
-            states[idx][t] = 'executing';
-            aux[current].executedSinceLastBlock++;
-            
-            // Verificar si debe bloquearse DESPUÉS de esta unidad de ejecución
-            const p = procesos.find(x => x.name === current);
-            if (!aux[current].hasBlocked && p.bi > 0 && aux[current].executedSinceLastBlock >= p.bi) {
-                aux[current].hasBlocked = true;
-                // El bloqueo comienza en el SIGUIENTE ciclo, pero ya marcamos esta unidad como ejecución
-                aux[current].remainingBlock = p.bd;
-                aux[current].executedSinceLastBlock = 0;
-            }
-        }
-    }
-}
 
     // Marcar 'ready' (llegó pero no ejecutó y no estaba bloqueado)
     for (let pi = 0; pi < procNames.length; pi++) {
@@ -923,5 +840,6 @@ window.addEventListener('load', () => {
     renderResults(sim);
 });
 </script>
+
 </body>
 </html>
