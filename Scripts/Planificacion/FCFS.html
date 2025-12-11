@@ -816,38 +816,39 @@ function renderResults(sim) {
         remainingBlock: 0
     };
 
-    for (let t = 0; t < T_total_sistema; t++) {
-        const current = timeline[t] || null;
-        
-        // Marcar ejecución
-        if (current) {
-            const idx = procNames.indexOf(current);
-            if (idx >= 0) {
-                states[idx][t] = 'executing';
-                aux[current].executedSinceLastBlock++;
-                
-                // Si debe bloquearse ahora
-                const p = procesos.find(x => x.name === current);
-                if (!aux[current].hasBlocked && p.bi > 0 && aux[current].executedSinceLastBlock >= p.bi) {
-                    aux[current].hasBlocked = true;
-                    aux[current].remainingBlock = p.bd;
-                    aux[current].executedSinceLastBlock = 0;
-                }
-            }
+for (let t = 0; t < T_total_sistema; t++) {
+    const current = timeline[t] || null;
+    
+    // PRIMERO: Aplicar bloqueos pendientes (esto es clave)
+    // Los procesos bloqueados no pueden ejecutar en este instante
+    for (const name of procNames) {
+        const a = aux[name];
+        if (a.remainingBlock > 0) {
+            const idx = procNames.indexOf(name);
+            // Si está bloqueado, marcar como bloqueado (incluso si "current" es este proceso)
+            states[idx][t] = 'blocked';
+            a.remainingBlock = Math.max(0, a.remainingBlock - 1);
         }
-        
-        // Aplicar bloqueos pendientes para cada proceso
-        for (const name of procNames) {
-            const a = aux[name];
-            if (a.remainingBlock > 0) {
-                const idx = procNames.indexOf(name);
-                if (states[idx][t] !== 'executing') {
-                    states[idx][t] = 'blocked';
-                    a.remainingBlock = Math.max(0, a.remainingBlock - 1);
-                }
+    }
+    
+    // LUEGO: Marcar ejecución solo si no está bloqueado
+    if (current) {
+        const idx = procNames.indexOf(current);
+        if (idx >= 0 && states[idx][t] !== 'blocked') {
+            states[idx][t] = 'executing';
+            aux[current].executedSinceLastBlock++;
+            
+            // Verificar si debe bloquearse DESPUÉS de esta unidad de ejecución
+            const p = procesos.find(x => x.name === current);
+            if (!aux[current].hasBlocked && p.bi > 0 && aux[current].executedSinceLastBlock >= p.bi) {
+                aux[current].hasBlocked = true;
+                // El bloqueo comienza en el SIGUIENTE ciclo, pero ya marcamos esta unidad como ejecución
+                aux[current].remainingBlock = p.bd;
+                aux[current].executedSinceLastBlock = 0;
             }
         }
     }
+}
 
     // Marcar 'ready' (llegó pero no ejecutó y no estaba bloqueado)
     for (let pi = 0; pi < procNames.length; pi++) {
